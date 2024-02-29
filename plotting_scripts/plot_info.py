@@ -95,8 +95,9 @@ def fx_timeseries(t,x_p,datax,ixd=0):     #index value of x as input
  #append values
         time_values.extend(tj)
         f_xt_values.extend(f_xi_tj)
-        if(j==np.round(1/4*t_n) or j==np.round(1/2*t_n)) or j==np.round(3/4*t_n):
+        if(j==np.round(1/8*t_n) or j==np.round(1/4*t_n)) or j==np.round(3/8*t_n) or  j==np.round(1/2*t_n) or j==np.round(5/8*t_n) or j==np.round(3/4*t_n) or j==np.round(7/8*t_n):
                 print("Progress: {} %".format(j/t_n *100))
+    print("Done...!")
     return time_values,f_xt_values
 
 

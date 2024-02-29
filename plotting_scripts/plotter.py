@@ -42,45 +42,37 @@ print("\nSetting central directory:       {}".format(home_dir))
 print("Setting simulation directory:    {}".format(sim_dir))
 
 
+current_dir = os.getcwd()
+plot_dir = current_dir+"/plots"
 
-outdir = sim_dir+sim_name+"/output-000"+out_number+"/output_directory"
-
-print(outdir)
-
-
-binac_dir = "/home/jolivera/BINAC_output"
-discoverer_dir = "/home/jolivera/Discoverer_data"
-python_dir = "/home/jolivera/python"
-ns_disc_k2 = discoverer_dir+"/NS_SF_k2"
-gr_dir = binac_dir+"/SF_NS/tests/decoupling/NS_GR"
+#Define thorns 
+var_list = ["rho","phi"]
+thorn_list = ["hydrobase","scalarbase"]
 
 
+for j in range(len(thorn_list)):
+     
+    #Define arrays to store data
+    t_var   = []
+    var     = []
+    thorn = thorn_list[j]
+    quantity = var_list[j]
+    
+    for i in range(int(out_number)):
+                
+        outdir = sim_dir+sim_name+"/output-000"+str(i)+"/output_directory"
+        # Now you can use the output_dir variable in your program
+        print("Looking for simulation directory:", outdir)
+
+        t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir)
+        t_var_temp,var_temp=pinf.fx_timeseries(t1,x1,datax1)
+
+        t_var.extend(t_var_temp)
+        var.extend(var_temp)
+
+    os.chdir(plot_dir)
+    np.savetxt('{}_{}.txt'.format(quantity,sim_name), np.column_stack((t_var, var)), header='t {}'.format(quantity), comments='', fmt='%f')
 
 
 
-
-
-
-# Now you can use the output_dir variable in your program
-print("Looking for simulation directory:", outdir)
-
-#output_dir = ns_disc_k2
-thorn = "hydrobase"
-quantity = 'rho'
-
-t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir)
-t_rho,rho=pinf.fx_timeseries(t1,x1,datax1)
-
-np.savetxt('rho_{}.txt'.format(sim_name), np.column_stack((t_rho, rho)), header='t rho', comments='', fmt='%f')
-
-
-thorn = "scalarbase"
-quantity = 'phi'
-
-os.getcwd()
-
-t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir)
-t_phi,phi=pinf.fx_timeseries(t1,x1,datax1)
-
-np.savetxt('phi_{}.txt'.format(sim_name), np.column_stack((t_phi, phi)), header='t phi', comments='', fmt='%f')
 
