@@ -51,12 +51,13 @@ thorn_list = ["hydrobase","scalarbase"]
 
 
 for j in range(len(thorn_list)):
-     
+
     #Define arrays to store data
     t_var   = []
     var     = []
     thorn = thorn_list[j]
     quantity = var_list[j]
+    print("Getting data for {}-{}".format(thorn,quantity)) 
     
     for i in range(int(out_number)):
                 
@@ -72,7 +73,7 @@ for j in range(len(thorn_list)):
 
     os.chdir(plot_dir)
     np.savetxt('{}_{}.txt'.format(quantity,sim_name), np.column_stack((t_var, var)), header='t {}'.format(quantity), comments='', fmt='%f')
-
+    print("Saving file as {}_{}.txt".format(quantity,sim_name))
 
 
 
