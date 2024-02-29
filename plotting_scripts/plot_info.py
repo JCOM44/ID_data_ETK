@@ -1,28 +1,13 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import os, sys
 import numpy as np
-import matplotlib.ticker as mticker
-from matplotlib import rc
+#import matplotlib.ticker as mticker
+#from matplotlib import rc
 
 
 
 # Plot basic stuff
-fontsize  = 10
-linewidth = 1
-rc('text', usetex=True)
-rc('font', family='serif')
-rc('font', serif='palatino')
-#rc('font', weight='bolder')
-rc('mathtext', default='sf')
-rc("lines", markeredgewidth=1)
-rc("lines", linewidth=linewidth)
-rc('axes', labelsize=fontsize)
-rc("axes", linewidth=(linewidth+1)//2)
-rc('xtick', labelsize=fontsize)
-rc('ytick', labelsize=fontsize)
-rc('legend', fontsize=fontsize)
-rc('xtick.major', pad=8)
-rc('ytick.major', pad=8)
+
 
 # constants, in SI
 G = 6.673e-11       # m^3/(kg s^2)

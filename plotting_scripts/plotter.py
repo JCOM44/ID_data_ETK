@@ -1,8 +1,12 @@
-import matplotlib.pyplot as plt
+
 import os, sys
 import numpy as np
-import matplotlib.ticker as mticker
-from matplotlib import rc
+#sys.path.append("/home/jmeneses/ET_files/ID_data_ETK/plotting_scripts/packaging/src")
+#sys.path.append("/home/jmeneses/ET_files/ID_data_ETK/plotting_scripts/matplotlib/lib")
+
+#import matplotlib.pyplot as plt
+#import matplotlib.ticker as mticker
+#from matplotlib import rc
 import re 
 import plot_info as pinf
 
@@ -11,7 +15,7 @@ import plot_info as pinf
 
 # Check if the output directory is provided as a command-line argument
 if len(sys.argv) < 4:
-    print("Usage: python3 plotter.py home_dir sim_name output_number")
+    print("Usage: python3 plotter.py computer_name sim_name output_number")
     sys.exit(1)
 
 # Retrieve the output directory from the command-line arguments
@@ -67,6 +71,9 @@ quantity = 'rho'
 t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir)
 t_rho,rho=pinf.fx_timeseries(t1,x1,datax1)
 
+np.savetxt('rho_{}.txt'.format(sim_name), np.column_stack((t_rho, rho)), header='t rho', comments='', fmt='%f')
+
+
 thorn = "scalarbase"
 quantity = 'phi'
 
@@ -74,3 +81,6 @@ os.getcwd()
 
 t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir)
 t_phi,phi=pinf.fx_timeseries(t1,x1,datax1)
+
+np.savetxt('phi_{}.txt'.format(sim_name), np.column_stack((t_phi, phi)), header='t phi', comments='', fmt='%f')
+
