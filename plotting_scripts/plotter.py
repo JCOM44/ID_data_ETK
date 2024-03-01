@@ -72,7 +72,7 @@ for j in range(len(thorn_list)):
         var.extend(var_temp)
 
     os.chdir(plot_dir)
-    np.savetxt('{}_{}.txt'.format(quantity,sim_name), np.column_stack((t_var, var)), header='t {}'.format(quantity), comments='', fmt='%f')
+    np.savetxt('{}_{}.txt'.format(quantity,sim_name), np.column_stack((t_var, var)), header='t {}'.format(quantity), comments='', fmt='%.18e')
     print("Saving file as {}_{}.txt".format(quantity,sim_name))
 
 
