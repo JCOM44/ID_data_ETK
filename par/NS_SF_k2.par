@@ -154,7 +154,7 @@ CarpetRegrid2::radius_1[7]  = 2.0   #0.0078125	    #not used
 
 
 
-time::dtfac = 0.2		#CFL condition, indicates timestep as DT=dtfac*dx
+time::dtfac = 0.4		#CFL condition, indicates timestep as DT=dtfac*dx
 MoL::ODE_Method             = "rk4"
 MoL::MoL_Intermediate_Steps = 4
 MoL::MoL_Num_Scratch_Levels = 1
@@ -448,11 +448,11 @@ Trigger::Trigger_Steered_Scalar_Value	 [3] = "8"
 
 
 IOBasic::outInfo_every              = 1
-IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse  ScalarBase::phi1  ScalarBase::Kphi1"
+IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse  ScalarBase::phi  ScalarBase::Kphi ADMBase::betax ScalarEvolve::rhs_phi1"
 
 #IO::out_dir      = $parfile	
 
-IOScalar::outScalar_every = 32
+IOScalar::outScalar_every = 0
 IOScalar::one_file_per_group = yes
 IOScalar::outScalar_vars  = "
  HydroBase::rho
@@ -494,13 +494,15 @@ IOASCII::out1D_vars      = "
  HydroBase::vel
  ADMBase::lapse
  ADMBase::metric
+ ADMBase::shift
  ADMBase::curv
  ML_ADMConstraints::ML_Ham
 # ML_ADMConstraints::ML_mom
  ScalarBase::phi1
-# ScalarBase::Kphi
- EJFrame::A_EtoJ
- EJFrame::A_JtoE
+ ScalarBase::Kphi
+ ScalarEvolve::rhs_phi1
+# EJFrame::A_EtoJ
+# EJFrame::A_JtoE
 "
 
 IOHDF5::out2D_every            = 0 #2048
@@ -539,7 +541,7 @@ IOHDF5::out2D_vars             = "
 
 # Parameters of thorn TerminationTrigger (implementing TerminationTrigger)
 TerminationTrigger::create_termination_file = "yes"
-TerminationTrigger::max_walltime = 48.0
+TerminationTrigger::max_walltime            = 48
 TerminationTrigger::on_remaining_walltime   = 30
 TerminationTrigger::termination_file        = "TERMINATE"
 TerminationTrigger::termination_from_file   = "yes"
@@ -551,7 +553,7 @@ CarpetIOHDF5::checkpoint                    = "yes"
 IOUtil::checkpoint_dir                  = "output_directory/checkpoints"
 IOUtil::checkpoint_every_walltime_hours = 12
 IOUtil::checkpoint_keep                 = 1
-IOUtil::checkpoint_on_terminate         = "no" #"yes"
+IOUtil::checkpoint_on_terminate         = "yes" #"yes"
 IOUtil::out_dir                         = "output_directory"
 IOUtil::out_fileinfo                    = "none"
 IOUtil::parfile_write                   = "generate"

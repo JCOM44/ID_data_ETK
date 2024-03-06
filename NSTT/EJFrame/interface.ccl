@@ -1,0 +1,18 @@
+# Interface definition for thorn EJFrame
+
+
+implements: EJFrame
+inherits: ADMBase, TmunuBase, HydroBase, ScalarBase
+
+private:
+
+CCTK_REAL A_EtoJ type=gf timelevels=3  tags='tensortypealias="Scalar" tensorweight=0' 
+{
+AEtoJ
+}"Conf factor Einstein to Jordan"
+
+CCTK_REAL A_JtoE type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=0' 
+{
+AJtoE
+}"Conf factor Jordan to Einstein"
+

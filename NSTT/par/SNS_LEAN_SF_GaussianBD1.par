@@ -1,0 +1,564 @@
+## non rotating NS with Scalar field influence 
+
+###########################################################
+############### Active Thorns #############################
+###########################################################
+
+ActiveThorns = "Time MoL Dissipation"									#Required for method of lines evolution eqs
+ActiveThorns = "Coordbase CartGrid3d Boundary StaticConformal RotatingSymmetry180 CoordGauge"		#Grid, coords, boundaries and symmetries
+ActiveThorns = "SymBase ADMBase TmunuBase HydroBase InitBase ADMCoupling ADMMacros Constants"		# Inital base variable definition and infrastructure
+ActiveThorns = "Formaline SystemTopology LoopControl"							# metadata of the runs, thread layout
+ActiveThorns = "Slab SpaceMask LocalReduce aeilocalinterp"						#arrays, processor reduce and masks
+ActiveThorns = "Carpet CarpetLib CarpetReduce CarpetRegrid2 CarpetInterp CarpetEvolutionMask"		#Carpet grid
+ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic IOUtil"				#Carpet and output
+ActiveThorns = "ScalarBase ScalarInit ScalarEvolveNEW SphericalSurface EJFrame"					#Scalar Canuda
+ActiveThorns = "ML_ADMConstraints NaNChecker TerminationTrigger"								#Quality control
+ActiveThorns = "TwoPunctures"
+
+
+###########################################################
+#####################   grid parameters   #################
+###########################################################
+
+CartGrid3D::type         = "coordbase"
+CartGrid3D::domain       = "full"
+CartGrid3D::avoid_origin = "no"  #original: no
+CoordBase::xmin =   0.0
+CoordBase::ymin = -204.8
+CoordBase::zmin =   0.0
+CoordBase::xmax = 204.8
+CoordBase::ymax = 204.8
+CoordBase::zmax = 204.8
+CoordBase::dx   =   1.6
+CoordBase::dy   =   1.6
+CoordBase::dz   =   1.6
+
+CoordBase::boundary_size_x_lower        = 3
+CoordBase::boundary_size_y_lower        = 3
+CoordBase::boundary_size_z_lower        = 3
+CoordBase::boundary_size_x_upper        = 3
+CoordBase::boundary_size_y_upper        = 3
+CoordBase::boundary_size_z_upper        = 3
+CoordBase::boundary_shiftout_x_lower    = 1
+CoordBase::boundary_shiftout_y_lower    = 0
+CoordBase::boundary_shiftout_z_lower    = 1
+CoordBase::boundary_shiftout_x_upper    = 0
+CoordBase::boundary_shiftout_y_upper    = 0
+CoordBase::boundary_shiftout_z_upper    = 0
+
+
+###########################################################
+#####################   Symmetries   ######################
+###########################################################
+
+
+ActiveThorns = "ReflectionSymmetry"
+
+ReflectionSymmetry::reflection_x = "no"
+ReflectionSymmetry::reflection_y = "no"
+ReflectionSymmetry::reflection_z = "yes"
+ReflectionSymmetry::avoid_origin_x = "no"
+ReflectionSymmetry::avoid_origin_y = "no"
+ReflectionSymmetry::avoid_origin_z = "no"
+
+RotatingSymmetry180::poison_boundaries  = "yes"
+
+
+TmunuBase::stress_energy_storage = yes
+TmunuBase::stress_energy_at_RHS  = yes
+TmunuBase::timelevels            =  1
+TmunuBase::prolongation_type     = none
+
+
+
+###########################################################
+#####################   Carpet & Cactus   #################
+###########################################################
+
+HydroBase::timelevels            = 3
+
+ADMMacros::spatial_order = 4
+
+ADMBase::metric_type     = "physical"
+
+ML_ADMConstraints::timelevels = 3
+
+SpaceMask::use_mask      = "yes"
+
+Cactus::terminate           = "time"
+Cactus::cctk_final_time     = 4000 
+
+
+
+Carpet::domain_from_coordbase = "yes"
+Carpet::enable_all_storage       = no
+Carpet::use_buffer_zones         = "yes"
+Carpet::schedule_barriers = "no"
+
+Carpet::poison_new_timelevels    = "yes"
+Carpet::check_for_poison         = "no"
+
+
+Carpet::init_3_timelevels        = no
+Carpet::init_fill_timelevels     = "yes"
+
+CarpetLib::poison_new_memory = "yes"
+CarpetLib::poison_value      = 114
+
+
+
+
+###########################################################
+############# Refinement and Compression   ################
+###########################################################
+
+# system specific Carpet paramters
+Carpet::max_refinement_levels    = 10
+driver::ghost_size               = 3
+Carpet::prolongation_order_space = 3
+Carpet::prolongation_order_time  = 2
+
+CarpetRegrid2::freeze_unaligned_levels = "yes"
+CarpetRegrid2::freeze_unaligned_parent_levels = "yes"
+CarpetRegrid2::ensure_proper_nesting = "yes"
+CarpetRegrid2::snap_to_coarse = "yes"
+CarpetRegrid2::symmetry_rotating180 = "yes"
+
+#CarpetIOHDF5::compression_level = 4
+
+CarpetRegrid2::regrid_every = 64  #must not be zero for the trigger to add new levels to work 
+CarpetRegrid2::num_centres  = 1
+
+
+#new levels added through triggers, starts with up to [4]
+CarpetRegrid2::num_levels_1 = 6
+
+CarpetRegrid2::radius_1[0]  = 204.8  #1.6
+CarpetRegrid2::radius_1[1]  = 128.0  #0.8
+CarpetRegrid2::radius_1[2]  = 64.0   #0.4
+CarpetRegrid2::radius_1[3]  = 32.0   #0.2
+CarpetRegrid2::radius_1[4]  = 16.0   #0.1	    #initial level, thrugh CFL condition, timestep is 0.04
+CarpetRegrid2::radius_1[5]  = 10.0   #0.05	    #dinamically added through trigger, timestep is 0.0125
+CarpetRegrid2::radius_1[6]  = 4.0   #0.015625       #dinamically added through trigger, timestep is 0.00625
+CarpetRegrid2::radius_1[7]  = 2.0   #0.0078125	    #not used
+#CarpetRegrid2::radius_1[8]  = 1.75  #0.00390625     #not used
+
+
+
+
+###########################################################
+#####################   Method of lines   #################
+###########################################################
+
+
+
+time::dtfac = 0.4		#CFL condition, indicates timestep as DT=dtfac*dx
+MoL::ODE_Method             = "rk4"
+MoL::MoL_Intermediate_Steps = 4
+MoL::MoL_Num_Scratch_Levels = 1
+
+
+
+###########################################################
+#####################   Debug tools   #####################
+###########################################################
+
+# check all physical variables for NaNs
+NaNChecker::check_every = 128
+NaNChecker::action_if_found = "terminate"#, "just warn", "abort"
+NaNChecker::check_vars = "
+            ADMBase::curv 
+            ADMBase::metric 
+            ADMBase::lapse 
+            ADMBase::shift 
+            HydroBase::rho 
+            HydroBase::eps 
+            HydroBase::press 
+            HydroBase::vel
+"
+
+## Lapse Condition:  \partial_t alpha = - alpha K
+## Shift Condition:  \partial_t beta^i = 0
+
+
+
+###########################################################
+#####################   Hydro  ############################
+###########################################################
+
+# Hydro paramters
+ActiveThorns = "EOS_Omni"
+ActiveThorns = "GRHydro"
+
+HydroBase::evolution_method      = "GRHydro"
+
+GRHydro::riemann_solver            = "Marquina"
+GRHydro::GRHydro_eos_type           = "Polytype"
+GRHydro::GRHydro_eos_table          = "2D_Polytrope"
+GRHydro::recon_method              = "ppm"
+GRHydro::GRHydro_stencil            = 3
+GRHydro::bound                     = "none"
+GRHydro::rho_abs_min               = 1.e-10
+GRHydro::sources_spatial_order     = 4
+GRHydro::grhydro_lorentz_overshoot_cutoff = 10.0
+
+GRHydro::sync_conserved_only     = "yes"
+GRHydro::reconstruct_Wv          = "yes"
+GRHydro::c2p_resort_to_bisection = "yes"
+GRHydro::use_cxx_code            = "yes"
+GRHydro::use_evolution_mask      = "always"
+
+#Eq of state
+eos_omni::poly_gamma		= 2.0
+eos_omni::poly_k		= 100.0	
+
+
+
+
+###########################################################
+#####################   Metric evolution   ################
+###########################################################
+
+
+
+ActiveThorns = "GenericFD NewRad"
+ActiveThorns = "LeanBSSNMoL"
+ADMBase::evolution_method        = "LeanBSSNMoL"
+ADMBase::lapse_evolution_method  = "LeanBSSNMoL"
+ADMBase::shift_evolution_method  = "LeanBSSNMoL"
+ADMBase::dtlapse_evolution_method= "LeanBSSNMoL"
+ADMBase::dtshift_evolution_method= "LeanBSSNMoL"
+
+
+LeanBSSNMoL::impose_conf_fac_floor_at_initial   = yes
+LeanBSSNMoL::eta_beta				= 1
+LeanBSSNMoL::conf_fac_floor			= 1.0d-04
+LeanBSSNMoL::derivs_order			= 4
+LeanBSSNMoL::use_advection_stencils		= yes
+LeanBSSNMoL::calculate_constraints		= yes 
+
+
+ScalarBase::evolution_method		= "ScalarEvolve"
+ScalarEvolve::chi_floor                 = 1.0d-06
+
+
+###########################################################
+#####################   initial data   ####################
+###########################################################
+
+# init parameters
+InitBase::initial_data_setup_method = "init_some_levels"
+
+ActiveThorns = "Hydro_RNSID"
+
+HydroBase::initial_hydro 	= "hydro_rnsid"
+ADMBase::initial_data 		= "hydro_rnsid"
+ADMBase::initial_lapse 		= "hydro_rnsid"
+ADMBase::initial_shift 		= "hydro_rnsid"
+ADMBase::initial_dtlapse        = "zero"
+ADMBase::initial_dtshift        = "zero"
+
+Hydro_rnsid::rotation_type 	= "uniform"
+Hydro_rnsid::axes_ratio 	= 1.0
+Hydro_rnsid::rho_central 	= 1.28e-3 #3.154e-3 #for collapse ######multiply by 6.172709362130058e17 to get into g/cm^3, in this case its 1.9468725328158208e15
+Hydro_rnsid::eos_type 		= "poly"
+Hydro_rnsid::RNS_Gamma 		= 2.0
+Hydro_rnsid::RNS_K 		= 100.0
+Hydro_rnsid::save_2Dmodel 	= "yes"
+
+
+ScalarBase::initial_scalar      = ID_SF_Gaussian
+ScalarBase::mu                  = 0.0
+
+ScalarInit::scalar_GaussProfile = single_mode
+ScalarInit::scalar_Initialize   = "zero_momentum" 
+ScalarInit::l0SF                = 0
+ScalarInit::m0SF                = 0
+ScalarInit::ampSF               = 1.0e-5
+ScalarInit::r0SF                = 7.0
+ScalarInit::widthSF             = 1.0
+
+
+ScalarEvolve::k0BD		= 0.0001 # between 0.1 and 0.001
+ScalarEvolve::betaDEF		= 0.0 #-4.5
+EJFrame::activate 	= "yes"
+EJFrame::storeA		= "yes"
+
+###########################################################
+################ Spatial finite differencing  #############
+###########################################################
+
+Dissipation::epsdis = 0.2
+Dissipation::order  = 5
+Dissipation::vars   = "
+  ScalarBase::phi
+  ScalarBase::Kphi
+"
+
+
+###########################################################
+#####################   puncture data   ###################
+###########################################################
+
+#only relevant when working with binaries
+
+#TwoPunctures::par_b          =  0.1
+#TwoPunctures::par_m_plus     =  1.6
+#TwoPunctures::par_P_plus [1] = +0.3331917498
+#TwoPunctures::schedule_in_ADMBase_InitialData = no
+#TwoPunctures::par_m_minus       =  0.0
+#TwoPunctures::initial_lapse_psi_exponent  = -2.0  #pre collapsed lapse
+
+
+
+#TwoPunctures::TP_epsilon = 1.0e-2
+#TwoPunctures::TP_Tiny    = 1.0e-2
+#TwoPunctures::verbose = yes
+
+#########################################################
+################# Horizon finder ########################
+#########################################################
+
+ActiveThorns = "AHFinderDirect AHFinder CarpetMask"
+
+#This is activated later with a trigger
+
+AHFinderDirect::find_every = 0
+#AHFinderDirect::find_after_individual_time[1] = 250.0   #uncomment to instead find after certain time 
+AHFinderDirect::output_h_every 	= 128
+#AHFinderDirect::set_mask_for_individual_horizon[1] = "true"
+#AHFinderDirect::set_new_style_mask = "true"
+#AHFinderDirect::set_old_style_mask = "true"
+
+AHFinderDirect::move_origins = yes
+AHFinderDirect::reshape_while_moving = yes
+AHFinderDirect::predict_origin_movement = yes
+AHFinderDirect::geometry_interpolator_name = "Lagrange polynomial interpolation"
+AHFinderDirect::geometry_interpolator_pars = "order=4"
+AHFinderDirect::surface_interpolator_name = "Lagrange polynomial interpolation"
+AHFinderDirect::surface_interpolator_pars = "order=4"
+
+
+AHFinderDirect::origin_x[1] = 0.0
+AHFinderDirect::origin_y[1] = 0.0
+AHFinderDirect::origin_z[1] = 0.0
+AHFinderDirect::initial_guess_method[1] = "coordinate sphere"
+AHFinderDirect::initial_guess__coord_sphere__x_center[1] = 0.0
+AHFinderDirect::initial_guess__coord_sphere__y_center[1] = 0.0
+AHFinderDirect::initial_guess__coord_sphere__z_center[1] = 0.0
+AHFinderDirect::initial_guess__coord_sphere__radius[1] = 1.0
+AHFinderDirect::which_surface_to_store_info          [1] = 0
+
+
+
+###########################################################
+################# Excision surface    ####################
+###########################################################
+
+
+SphericalSurface::nsurfaces = 1    # 1 (BH-QL) + 2 (QL) + 12 (OUT)   
+SphericalSurface::maxntheta = 39
+SphericalSurface::maxnphi = 76
+
+# ----------- BH Horizon spherical surface  -----------
+
+SphericalSurface::ntheta       [0] = 39
+SphericalSurface::nphi         [0] = 76
+SphericalSurface::nghoststheta [0] = 2
+SphericalSurface::nghostsphi   [0] = 2
+SphericalSurface::name         [0] = "App Horizon"
+
+###########################################################
+################# Mask parameters  ########################
+###########################################################
+
+ActiveThorns = "SetMask_SphericalSurface"
+
+#SetMask_SphericalSurface::SetMask_SurfaceIndex[0] = 0
+#SetMask_SphericalSurface::SetMask_RadiusFactor[0] = 0.6
+#SetMask_SphericalSurface::SetMask_TrueShape[0]    = "false"
+
+#CarpetMask::excluded_surface[0] = 0				#new addition
+#CarpetMask::excluded_surface_factor[0] = 1.0			#
+
+
+
+##########################################################
+################# TRIGGER ################################
+##########################################################
+
+ActiveThorns = "Trigger"
+Trigger::Trigger_Number = 0 #4 
+
+# if lapse < 0.2 enable AHFinder
+Trigger::Trigger_Once            	 [0] = 1
+Trigger::Trigger_Checked_Variable	 [0] = "ADMBase::alp"
+Trigger::Trigger_Reduction     		 [0] = "minimum"
+Trigger::Trigger_Relation       	 [0] = "<"
+Trigger::Trigger_Checked_Value  	 [0] = 0.20
+Trigger::Trigger_Reaction                [0] = "steerparam"
+Trigger::Trigger_Steered_Parameter_Thorn [0] = "AHFinderDirect"
+Trigger::Trigger_Steered_Parameter_Name  [0] = "find_every"
+Trigger::Trigger_Steered_Parameter_Value [0] = "128"
+
+#add refinement level
+Trigger::Trigger_Once               	 [1] = 1
+Trigger::Trigger_Checked_Variable   	 [1] = "ADMBase::alp"
+Trigger::Trigger_Reduction          	 [1] = "minimum"
+Trigger::Trigger_Relation           	 [1] = "<"
+Trigger::Trigger_Checked_Value      	 [1] = 0.20
+Trigger::Trigger_Reaction           	 [1] = "steerscalar"
+Trigger::Trigger_Steered_Scalar	    	 [1] = "CarpetRegrid2::num_levels[0]" # == num_levels_1
+Trigger::Trigger_Steered_Scalar_Value	 [1] = "6"
+
+
+#add refinement level
+Trigger::Trigger_Once               	 [2] =  1
+Trigger::Trigger_Checked_Variable   	 [2] = "ADMBase::alp"
+Trigger::Trigger_Reduction          	 [2] = "minimum"
+Trigger::Trigger_Relation           	 [2] = "<"
+Trigger::Trigger_Checked_Value     	 [2] = 0.1
+Trigger::Trigger_Reaction           	 [2] = "steerscalar"
+Trigger::Trigger_Steered_Scalar	    	 [2] = "CarpetRegrid2::num_levels[0]" # == num_levels_1
+Trigger::Trigger_Steered_Scalar_Value	 [2] = "7"
+
+
+#add refinement level
+Trigger::Trigger_Once               	 [3] =  1
+Trigger::Trigger_Checked_Variable   	 [3] = "ADMBase::alp"
+Trigger::Trigger_Reduction          	 [3] = "minimum"
+Trigger::Trigger_Relation           	 [3] = "<"
+Trigger::Trigger_Checked_Value     	 [3] = 0.05
+Trigger::Trigger_Reaction           	 [3] = "steerscalar"
+Trigger::Trigger_Steered_Scalar	    	 [3] = "CarpetRegrid2::num_levels[0]" # == num_levels_1
+Trigger::Trigger_Steered_Scalar_Value	 [3] = "8"
+
+
+
+###########################################################
+#####################   I/O   #############################
+###########################################################
+
+
+
+
+
+IOBasic::outInfo_every              = 1
+IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse  ScalarBase::phi1  EJFrame::A_EtoJ{reductions = 'norm1'} EJFrame::A_JtoE{reductions = 'norm1'}"
+
+#IO::out_dir      = $parfile	
+
+IOScalar::outScalar_every = 32
+IOScalar::one_file_per_group = yes
+IOScalar::outScalar_vars  = "
+ HydroBase::rho
+ HydroBase::press
+ HydroBase::eps
+ HydroBase::vel
+ ADMBase::lapse
+ ADMBase::metric
+ ADMBase::curv
+ ML_ADMConstraints::ML_Ham
+ ScalarBase::phi1
+ EJFrame::A_EtoJ
+ EJFrame::A_JtoE
+"
+#CarpetIOHDF5::one_file_per_group             = "no"   # this is required by multipatch
+
+#CarpetIOHDF5::out3d_criterion   = "time"
+#CarpetIOHDF5::out3d_dt = 10
+#CarpetIOHDF5::one_file_per_group = "yes"
+#CarpetIOHDF5::out3D_vars      = "
+ #Grid::Coordinates{out_every=1000000000 refinement_levels={0 4}}
+ #ADMBase::gxx{refinement_levels={0 4}}
+ #ADMBase::alp{refinement_levels={0 4}}
+ #ADMBase::betax{refinement_levels={0 4}}
+ #HydroBase::eps{refinement_levels={4}}
+ #HydroBase::rho{refinement_levels={4}}
+ #HydroBase::press{refinement_levels={4}}"
+       
+
+IOASCII::out1D_every     = 256
+IOASCII::one_file_per_group = yes
+IOASCII::output_symmetry_points = no
+IOASCII::out3D_ghosts           = no
+IOASCII::out3D_outer_ghosts     = no
+IOASCII::out1D_vars      = "
+ HydroBase::rho
+ HydroBase::press
+ HydroBase::eps
+ HydroBase::vel
+ ADMBase::lapse
+ ADMBase::metric
+ ADMBase::curv
+ ML_ADMConstraints::ML_Ham
+# ML_ADMConstraints::ML_mom
+ ScalarBase::phi1
+# ScalarBase::Kphi
+ EJFrame::A_EtoJ
+ EJFrame::A_JtoE
+"
+
+IOHDF5::out2D_every            = 0 #2048
+IOHDF5::out2D_vars             = "
+        ADMBase::metric
+        ADMBase::curv
+        ADMBase::lapse
+        ADMBase::shift
+	HydroBase::rho
+        ML_ADMConstraints::ML_Ham
+        ML_ADMConstraints::ML_mom
+"
+
+
+
+# # for 3D HDF5 output
+ IOHDF5::out_every              = 0
+ IOHDF5::one_file_per_group     = yes
+ IOHDF5::output_symmetry_points = no
+ IOHDF5::out3D_ghosts           = no
+ IOHDF5::compression_level      = 1
+ IOHDF5::use_checksums          = yes
+ IOHDF5::out_vars               = "
+         ADMBase::metric
+         ADMBase::curv
+         ADMBase::lapse
+         ADMBase::shift
+	 HydroBase::rho
+         ML_ADMConstraints::ML_Ham
+         ML_ADMConstraints::ML_mom
+"
+
+
+####################################################
+############ Checkpoints ###########################
+####################################################
+
+# Parameters of thorn TerminationTrigger (implementing TerminationTrigger)
+TerminationTrigger::create_termination_file = "yes"
+TerminationTrigger::max_walltime            = 48
+TerminationTrigger::on_remaining_walltime   = 30
+TerminationTrigger::termination_file        = "TERMINATE"
+TerminationTrigger::termination_from_file   = "yes"
+
+
+
+#parameters of thorn IOUtil (implementing IO)
+CarpetIOHDF5::checkpoint                    = "yes"
+IOUtil::checkpoint_dir                  = "output_directory/checkpoints"
+IOUtil::checkpoint_every_walltime_hours = 12
+IOUtil::checkpoint_keep                 = 1
+IOUtil::checkpoint_on_terminate         = "yes"
+IOUtil::out_dir                         = "output_directory"
+IOUtil::out_fileinfo                    = "none"
+IOUtil::parfile_write                   = "generate"
+IOUtil::recover                         = "autoprobe"
+IOUtil::recover_and_remove              = "yes"
+IOUtil::recover_dir                     = "output_directory/checkpoints"
+#IO::checkpoint_ID                   = "yes"
+#IO::checkpoint_every                = 57600
+#IO::checkpoint_keep                 = 3
+#IO::checkpoint_on_terminate         = "yes"
+
+
+

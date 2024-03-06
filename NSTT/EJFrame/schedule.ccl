@@ -1,0 +1,198 @@
+# Schedule definitions for thorn EJFrame
+##
+# EinsteinToJordan transforms from Einstein to Jordan frame
+# JordanToEinstein transforms from Jordan to Einstein frame
+#
+#  The quantities transformed, along with their transformation factors are:
+#
+#	g_ij^E = A^-2(phi)  g_ij^J
+#
+#	rho^E = A^4(phi) rho^J
+#
+#	eps^E = A^4(phi) eps^J
+#
+#	p^E = A^4(phi) p^J
+#
+#	u_mu^E = A^-1(phi) u_mu^J 
+#
+#	T_munu^E = A^2(phi) T_munu^J
+#################################################################################################
+#               NOTES:
+#
+#	Necessary to add new array to sync there and write when calculating the functions
+#	Maybe add only to change rho in GRHydro_Rho_Minima_Setup
+#	Maybe add just hydro to change in boundaries
+#      
+#	Possibly Reconstruct, Riemann and UpdateCalcul can be done only once 
+#	as they are sequantial and from the same group FluxTerms functions
+#
+#	Same in CCTK_Initial, as EosChangeGammaShibata, SqrtSpatialDet and InitialAtmospherReset are sequential
+####################################################################################################
+
+if( activate )
+{
+
+	if( storeA )
+	{
+		STORAGE:A_EtoJ[3]
+		STORAGE:A_JtoE[3]
+	}
+### FluxTerms
+#
+	schedule EinsteinToJordan in FluxTerms BEFORE Reconstruct  
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame"
+
+	schedule JordanToEinstein in FluxTerms AFTER UpdateCalcul #Reconstruct  
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame" 
+
+#### HydroBase_Con2Prim
+##
+
+	schedule EinsteinToJordan IN HydroBase_Con2Prim BEFORE GRHydro_SqrtSpatialDeterminant IF GRHydro::execute_MoL_Step
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame" 
+
+	schedule JordanToEinstein IN HydroBase_Con2Prim AFTER Con2Prim  IF GRHydro::execute_MoL_PostStep 
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+
+#### CCTK_POST_RECOVER_VARIABLES
+
+	schedule EinsteinToJordan AT CCTK_POST_RECOVER_VARIABLES BEFORE GRHydro_SqrtSpatialDeterminant 
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame" 
+
+	schedule JordanToEinstein AT CCTK_POST_RECOVER_VARIABLES AFTER GRHydro_SqrtSpatialDeterminant  
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+
+#### HydroBase_Prim2ConInitial
+
+	schedule EinsteinToJordan IN HydroBase_Prim2ConInitial BEFORE (Primitive2ConservativeCells, Primitive2ConservativePolyCells)
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame" 
+
+	schedule JordanToEinstein IN HydroBase_Prim2ConInitial AFTER (Primitive2ConservativeCells, Primitive2ConservativePolyCells)
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+
+### HydroBase_PostStep
+
+	schedule EinsteinToJordan IN HydroBase_PostStep BEFORE GRHydro_AtmosphereReset  
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame"
+
+	schedule JordanToEinstein IN HydroBase_PostStep AFTER GRHydro_AtmosphereReset  
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+
+### CCTK_PostPostInitial and CCTK_POstInitial
+
+	if (CCTK_IsThornActive("Carpet"))
+	{
+
+		schedule EinsteinToJordan AT CCTK_PostPostInitial BEFORE GRHydro_InitialAtmosphereReset  
+		{
+			LANG: FORTRAN
+		}  "Transform from Einstein to Jordan frame"
+
+		schedule JordanToEinstein AT CCTK_PostPostInitial AFTER GRHydro_InitialAtmosphereReset  
+		{
+			LANG: FORTRAN
+		} "Transform from Jordan to Einstein frame"
+	}
+
+	else if (CCTK_IsThornActive("PUGH"))
+	{
+		schedule EinsteinToJordan AT CCTK_PostInitial BEFORE GRHydro_InitialAtmosphereReset  
+		{
+			LANG: FORTRAN
+		}  "Transform from Einstein to Jordan frame"
+
+		schedule JordanToEinstein AT CCTK_PostInitial AFTER GRHydro_InitialAtmosphereReset  
+		{
+			LANG: FORTRAN
+		} "Transform from Jordan to Einstein frame"
+	}	
+
+
+####  CCTK_INITIAL
+
+	schedule EinsteinToJordan AT CCTK_Initial BEFORE (GRHydro_EoSChangeGammaK_Shibata, GRHydro_SqrtSpatialDeterminant) AFTER (GRHydro_Initial, ID_SF_Gauss_Group,ID_SF_Read2D_Group)
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame"
+
+	schedule JordanToEinstein AT CCTK_Initial AFTER GRHydro_InitialAtmosphereReset BEFORE LeanBSSN_adm2bssn 
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+### GRHydroRHS
+
+	schedule EinsteinToJordan IN GRHydroRHS BEFORE SourceTerms  
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame"
+
+	schedule JordanToEinstein IN GRHydroRHS AFTER SourceTerms  
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+### AddToTmunu
+
+	schedule EinsteinToJordan IN AddToTmunu BEFORE GRHydro_Tmunu  
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame"
+
+	schedule JordanToEinstein IN AddToTmunu AFTER GRHydro_Tmunu  
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+
+
+
+# Initial
+
+
+#	schedule EinsteinToJordan AT INITIAL BEFORE  GRHydroTransformADMToLocalBasis  
+#	{
+#		LANG: FORTRAN
+#	} "Transform from Einstein to Jordan frame"
+#
+#	schedule JordanToEinstein AT INITIAL AFTER GRHydroTransformADMToLocalBasis  
+#	{
+#		LANG: FORTRAN
+#	} "Transform from Jordan to Einstein frame"
+
+	schedule EinsteinToJordan IN ADMBase_SetADMVars BEFORE  GRHydroTransformADMToLocalBasis  
+	{
+		LANG: FORTRAN
+	} "Transform from Einstein to Jordan frame"
+
+	schedule JordanToEinstein IN ADMBase_SetADMVars AFTER GRHydroTransformADMToLocalBasis  
+	{
+		LANG: FORTRAN
+	} "Transform from Jordan to Einstein frame"
+
+
+}

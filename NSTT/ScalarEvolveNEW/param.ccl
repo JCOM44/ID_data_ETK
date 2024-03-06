@@ -1,0 +1,90 @@
+# Parameter definitions for thorn ScalarEvolve
+
+shares: ScalarBase
+USES CCTK_REAL V_lambda
+USES CCTK_REAL mu
+USES CCTK_REAL phi1_0
+USES CCTK_REAL phi2_0
+USES CCTK_INT  n_phi1
+USES CCTK_INT  n_phi2
+USES CCTK_REAL Kphi1_0
+USES CCTK_REAL Kphi2_0
+USES CCTK_INT  n_Kphi1
+USES CCTK_INT  n_Kphi2
+USES CCTK_BOOLEAN forcing_switch
+
+EXTENDS KEYWORD evolution_method ""
+{
+  "ScalarEvolve" :: "Use ScalarEvolve to evolve scalar variables"
+}
+
+
+shares: MethodOfLines
+USES CCTK_INT MoL_Num_Evolved_Vars
+USES CCTK_INT MoL_Num_Constrained_Vars
+USES CCTK_INT MoL_Num_SaveAndRestore_Vars
+
+
+restricted:
+
+CCTK_INT ScalarEvolve_MaxNumEvolvedVars "The maximum number of evolved variables used by ScalarEvolve" ACCUMULATOR-BASE=MethodofLines::MoL_Num_Evolved_Vars
+{
+  4:4           :: "Just 4: phi1, phi2, Kphi1, Kphi2"
+} 4
+
+CCTK_INT ScalarEvolve_MaxNumConstrainedVars "The maximum number of constrained variables used by ScalarEvolve" ACCUMULATOR-BASE=MethodofLines::MoL_Num_Constrained_Vars
+{
+  0:0           :: "none"
+} 0
+
+CCTK_INT ScalarEvolve_MaxNumSandRVars "The maximum number of save and restore variables used by ScalarEvolve" ACCUMULATOR-BASE=MethodofLines::MoL_Num_SaveAndRestore_Vars
+{
+  16:16           :: "lapse, shift, metric, and extrinsic curvature"
+} 16
+
+
+CCTK_REAL betaDEF "ln A(phi)= 1/2 betaDEF *  phi^2 + k0BD * phi, as given in arxiv.org/abs/1309.0605"
+{
+  *:*           :: "any  number"
+} 0
+
+CCTK_REAL k0BD "ln A(phi)= 1/2 betaDEF *  phi^2 + k0BD * phi, as given in arxiv.org/abs/1309.0605"
+{
+  *:*           :: "any  number"
+} 0
+
+private:
+
+BOOLEAN use_advection_stencils "Use lop-sided stencils for advection derivs"
+{
+} "yes"
+
+BOOLEAN check_rho "store the matter density"
+{
+} "no"
+
+
+CCTK_REAL chi_floor "Minimal value of abs(chi)"
+{
+  *:*  :: "Any value possible"
+} 1.0d-06
+
+
+KEYWORD outer_bound "outer boundary condition"
+{
+  "radiative"     :: "Sommerfeld BC"
+  "reflecting"    :: "reflecting BC"
+} "radiative"
+
+BOOLEAN z_is_radial "use with multipatch"
+{
+} "no"
+
+BOOLEAN compute_fluxes "Calculate the energy fluxes of the scalar field? calculation not available with multipatch"
+{
+} "no"
+
+CCTK_REAL eps_r "of value if rr approaches zero in densities computation"
+{
+  0:*   :: "any small positive value possible"
+} 1.0d-06
