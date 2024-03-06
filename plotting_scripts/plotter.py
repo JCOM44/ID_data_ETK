@@ -46,8 +46,8 @@ current_dir = os.getcwd()
 plot_dir = current_dir+"/plots"
 
 #Define thorns 
-var_list = ["rho","phi","kphi","shift","lapse"]
-thorn_list = ["hydrobase","scalarbase","scalarbase","admbase","admbase"]
+var_list = ["rho","phi","lapse","kphi","shift"]
+thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase"]
 
 
 for j in range(len(thorn_list)):
