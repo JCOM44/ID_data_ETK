@@ -45,9 +45,23 @@ print("Setting simulation directory:    {}".format(sim_dir))
 current_dir = os.getcwd()
 plot_dir = current_dir+"/plots"
 
+
+# sET to 1 to print something else
+debug_on = 0
+old_format = 0
+
+
+
+
+if (debug_on ==1):
+
+    var_list = ["phi_x_derivative","phi_rhs_total","kphi_rhs_total"]
+    thorn_list = ["scalarevolve","scalarevolve","scalarevolve"]
+
+else:
 #Define thorns 
-var_list = ["rho","phi","lapse","kphi","shift"]
-thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase"]
+    var_list = ["rho","phi","lapse","kphi","shift"]
+    thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase"]
 
 
 for j in range(len(thorn_list)):
@@ -60,8 +74,11 @@ for j in range(len(thorn_list)):
     print("Getting data for {}-{}".format(thorn,quantity)) 
     
     for i in range(int(out_number)):
-                
-        outdir = sim_dir+sim_name+"/output-000"+str(i)+"/output_directory"
+        
+        if (old_format == 1):
+            outdir = sim_dir+sim_name+"/output-000"+str(i)+"/tovtest"
+        else:
+            outdir = sim_dir+sim_name+"/output-000"+str(i)+"/output_directory"
         # Now you can use the output_dir variable in your program
         print("Looking for simulation directory:", outdir)
 

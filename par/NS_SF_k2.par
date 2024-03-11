@@ -285,7 +285,7 @@ EJFrame::storeA		= "yes"
 ################ Spatial finite differencing  #############
 ###########################################################
 
-Dissipation::epsdis = 0.2
+Dissipation::epsdis = 0.02
 Dissipation::order  = 5
 Dissipation::vars   = "
   ScalarBase::phi
@@ -448,7 +448,7 @@ Trigger::Trigger_Steered_Scalar_Value	 [3] = "8"
 
 
 IOBasic::outInfo_every              = 1
-IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse  ScalarBase::phi  ScalarBase::Kphi ADMBase::betax ScalarEvolve::rhs_phi1"
+IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse  ScalarBase::phi1  ScalarBase::Kphi1 ADMBase::betax"
 
 #IO::out_dir      = $parfile	
 
@@ -482,7 +482,7 @@ IOScalar::outScalar_vars  = "
  #HydroBase::press{refinement_levels={4}}"
        
 
-IOASCII::out1D_every     = 256
+IOASCII::out1D_every     = 512
 IOASCII::one_file_per_group = yes
 IOASCII::output_symmetry_points = no
 IOASCII::out3D_ghosts           = no
@@ -500,7 +500,6 @@ IOASCII::out1D_vars      = "
 # ML_ADMConstraints::ML_mom
  ScalarBase::phi1
  ScalarBase::Kphi
- ScalarEvolve::rhs_phi1
 # EJFrame::A_EtoJ
 # EJFrame::A_JtoE
 "
