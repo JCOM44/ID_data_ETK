@@ -33,7 +33,7 @@ elif re.search(r"iscovere",current_computer):
     print("Computer identified as Discoverer.")
 elif re.search(r"inac",current_computer):
     home_dir='/home/tu/tu_tu/tu_pelol01' 
-    sim_dir= '/beegfs/work/workspace/ws/tu_tupelol01-NS_SF-0/sims/'
+    sim_dir= '/beegfs/work/workspace/ws/tu_pelol01-NS_JBSSN-0/simulations/'
     print("Computer identified as BinaC.") 
 else:
     home_dir="NULL"
