@@ -60,8 +60,8 @@ if (debug_on ==1):
 
 else:
 #Define thorns 
-    var_list = ["rho","phi","lapse","kphi","shift"]
-    thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase"]
+    var_list = ["rho","phi","lapse","kphi","shift","trk","ml_ham"]
+    thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase","jordanfbssn","ml_admconstraints"]
 
 
 for j in range(len(thorn_list)):
