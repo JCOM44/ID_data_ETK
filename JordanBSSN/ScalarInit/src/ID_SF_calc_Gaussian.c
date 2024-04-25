@@ -242,8 +242,8 @@ ID_SF_Gauss (CCTK_ARGUMENTS)
 	if (CCTK_EQUALS (theory, "decouplingJ")){
 		psit_re = psit_re+1.0;
 	}
-	if (CCTK_EQUALS (theory, "decouplingJ")){
-		psit_re = psit_re+phi_at_inf;
+	if (CCTK_EQUALS (theory, "decoupling")){
+		psit_re = -(2.0*k0BD)*psit_re+phi_at_inf;
 	}
         phi1[ind]  = psit_re;
 /*        phi2[ind]  = psit_im;*/
