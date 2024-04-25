@@ -239,8 +239,11 @@ ID_SF_Gauss (CCTK_ARGUMENTS)
 
      else if ( CCTK_Equals ( scalar_Initialize , "zero_momentum") )
      {	
-	if (CCTK_EQUALS (theory, "decoupling")){
+	if (CCTK_EQUALS (theory, "decouplingJ")){
 		psit_re = psit_re+1.0;
+	}
+	if (CCTK_EQUALS (theory, "decouplingJ")){
+		psit_re = psit_re+phi_at_inf;
 	}
         phi1[ind]  = psit_re;
 /*        phi2[ind]  = psit_im;*/

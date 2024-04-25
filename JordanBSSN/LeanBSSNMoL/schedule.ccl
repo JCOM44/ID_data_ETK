@@ -1,0 +1,206 @@
+# Schedule definitions for thorn LeanBSSNMoL
+
+# Schedule lean evolution if evolution_method=LeanBSSNMoL
+if (CCTK_EQUALS (evolution_method, "LeanBSSNMoL")) {
+
+STORAGE: conf_fac[3], rhs_conf_fac[1]
+STORAGE: hmetric[3], rhs_hmetric[1]
+STORAGE: hcurv[3], rhs_hcurv[1]
+STORAGE: trk[3], rhs_trk[1]
+STORAGE: gammat[3], rhs_gammat[1]
+
+if (CCTK_EQUALS (lapse_evolution_method, "LeanBSSNMoL")){
+     STORAGE: rhs_lapse[1]
+}
+
+if (CCTK_EQUALS (shift_evolution_method, "LeanBSSNMoL")){
+     STORAGE: rhs_shift[1]
+}
+
+if (calculate_constraints)
+{
+  STORAGE: ham[3]
+  STORAGE: mom[3]
+}
+
+if (CCTK_EQUALS (scalar_evolution_method, "LeanBSSNMoL")){
+     STORAGE: rhs_sf[1]
+     STORAGE: rhs_sfK[1]
+}
+
+schedule Lean_ParamCheck AT ParamCheck
+{
+  LANG: C
+} "Check Lean parameters for consistency"
+
+schedule LeanBSSN_RegisterSlicing at STARTUP
+{
+  LANG: C
+  OPTIONS: meta
+} "Register slicing"
+
+schedule LeanBSSN_symmetries at BASEGRID
+{
+  LANG: Fortran
+  OPTIONS: Global
+} "Register symmetries of the BSSN grid functions"
+
+schedule LeanBSSN_zero_rhs at BASEGRID after LeanBSSN_symmetries
+{
+  LANG: Fortran
+} "Set all rhs functions to zero to prevent spurious nans"
+
+schedule LeanBSSN_adm2bssn at CCTK_INITIAL after ADMBase_PostInitial
+{
+  LANG: Fortran
+  OPTIONS: Local
+} "Convert initial data into BSSN variables"
+
+schedule LeanBSSN_Boundaries at CCTK_INITIAL after LeanBSSN_adm2bssn
+{
+  LANG: Fortran
+  OPTIONS: LEVEL
+  SYNC: LeanBSSNMoL::gammat
+} "Boundary enforcement"
+
+schedule GROUP ApplyBCs as LeanBSSN_ApplyBCs at CCTK_INITIAL after LeanBSSN_Boundaries
+{
+} "Apply boundary conditions"
+
+
+# MoL: registration
+
+schedule LeanBSSN_RegisterVars in MoL_Register
+{
+  LANG: C
+  OPTIONS: META
+} "Register variables for MoL"
+
+
+# MoL: compute source terms, etc
+
+schedule LeanBSSN_calc_bssn_rhs in MoL_CalcRHS as LeanBSSN_CalcRHS
+{
+  LANG: Fortran
+} "MoL RHS calculation"
+
+if (compute_rhs_at_initial) {
+     schedule LeanBSSN_calc_bssn_rhs in MoL_PostStep AT POSTINITIAL \
+       as LeanBSSN_CalcRHS before LeanBSSN_Boundaries
+     {
+       LANG: Fortran
+     } "MoL RHS calculation"
+
+     if (!z_is_radial) {
+          schedule LeanBSSN_calc_bssn_rhs_bdry in MoL_PostStep \
+            AT POSTINITIAL as LeanBSSN_CalcRHS_Bdry \
+            after LeanBSSN_CalcRHS
+          {
+            LANG: Fortran
+          } "MoL boundary RHS calculation"
+        }
+
+        if (z_is_radial) {
+             schedule LeanBSSN_calc_bssn_rhs_bdry_sph in MoL_PostStep \
+               AT POSTINITIAL as LeanBSSN_CalcRHS_Bdry_Sph
+             {
+               LANG: Fortran
+             } "MoL boundary RHS calculation in spherical coordinates"
+           }
+}
+
+
+if (!z_is_radial) {
+  schedule LeanBSSN_calc_bssn_rhs_bdry in MoL_CalcRHS as LeanBSSN_CalcRHS_Bdry \
+           after LeanBSSN_CalcRHS
+  {
+    LANG: Fortran
+  } "MoL boundary RHS calculation"
+}
+
+if (z_is_radial) {
+  schedule LeanBSSN_calc_bssn_rhs_bdry_sph in MoL_RHSBoundaries as LeanBSSN_CalcRHS_Bdry_Sph
+  {
+    LANG: Fortran
+  } "MoL boundary RHS calculation in spherical coordinates"
+}
+
+if (reset_dethh)
+{
+  schedule LeanBSSN_reset_detmetric in MoL_PostStep before LeanBSSN_Boundaries
+  {
+    LANG: Fortran
+  } "reset dethh = 1"
+}
+
+if (make_aa_tracefree)
+{
+  schedule LeanBSSN_remove_trA in MoL_PostStep before LeanBSSN_Boundaries after reset_detmetric
+  {
+    LANG: Fortran
+  } "Remove trace of A"
+}
+
+schedule LeanBSSN_impose_conf_fac_floor in MoL_PostStep before LeanBSSN_Boundaries
+{
+  LANG: Fortran
+} "Make sure conformal factor does not drop below specified value"
+
+
+schedule LeanBSSN_Boundaries in MoL_PostStep
+{
+  LANG: Fortran
+  OPTIONS: LEVEL
+  SYNC: ADMBase::lapse
+  SYNC: ADMBase::shift
+  SYNC: ScalarBase::phi
+  SYNC: ScalarBase::Kphi
+  SYNC: LeanBSSNMoL::conf_fac
+  SYNC: LeanBSSNMoL::hmetric
+  SYNC: LeanBSSNMoL::hcurv
+  SYNC: LeanBSSNMoL::trk
+  SYNC: LeanBSSNMoL::gammat
+} "MoL boundary enforcement"
+
+schedule GROUP ApplyBCs as LeanBSSN_ApplyBCs in MoL_PostStep after LeanBSSN_Boundaries
+{
+} "Apply boundary conditions"
+
+
+# MoL should now be done. update ADM variables here
+
+schedule LeanBSSN_bssn2adm in MoL_PostStep after LeanBSSN_ApplyBCs before ADMBase_SetADMVars
+{
+  LANG: Fortran
+  OPTIONS: Local
+} "Convert variables back to the ADM ones"
+
+
+# compute constraints
+
+if (calculate_constraints)
+
+  schedule GROUP LeanBSSN_constraints AT ANALYSIS
+  {
+    LANG: Fortran
+  } "Compute constraints"
+
+
+  schedule LeanBSSN_bssn_constraints IN LeanBSSN_constraints
+  {
+    LANG: Fortran
+  } "Compute constraints"
+
+  schedule LeanBSSN_Constraints_Boundaries after LeanBSSN_bssn_constraints in LeanBSSN_constraints
+  {
+    LANG: Fortran
+    OPTIONS: LEVEL
+    SYNC: LeanBSSNMoL::ham
+    SYNC: LeanBSSNMoL::mom
+  } "Enforce symmetry BCs in constraint computation"
+
+  schedule GROUP ApplyBCs as LeanBSSN_Constraints_ApplyBCs after LeanBSSN_Constraints_Boundaries in LeanBSSN_constraints
+  {
+  } "Apply boundary conditions"
+
+} # end if evolution_method="Lean_BSSN"
