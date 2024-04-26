@@ -21,6 +21,7 @@ SHARES: LeanBSSNMoL
 USES CCTK_REAL phi_at_inf
 USES KEYWORD theory
 USES CCTK_REAL k0BD
+USES CCTK_REAL B_DEF
 
 #=== local parameters ==========================
 RESTRICTED:

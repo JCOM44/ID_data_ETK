@@ -62,6 +62,8 @@ KEYWORD theory "choose theory"
   "decouplingJ"	  :: "Decoupling in Jordan frame"
   "decoupling"    :: "Decoupling in Jordan frame, normalized variable"
   "GR"		  :: "no scalar field, pure GR" 
+  "DEF"		  :: "DEF theory, Phi = exp(phi**2)"
+  "BD"	          :: "BD theory, Phi = exp(phi)"
 } "GR"
 
 CCTK_REAL phi_at_inf "value of phi at infinity"
@@ -73,6 +75,12 @@ CCTK_REAL k0BD "value of k0 in Brans-Dicke theory"
 {
  *:*
 } 1e-3
+
+CCTK_REAL B_DEF "value of B=-2beta in DEF theory" 
+{
+ *:*
+} 8.00
+
 private:
 
 CCTK_REAL conf_fac_floor "Minimal value of conformal factor"

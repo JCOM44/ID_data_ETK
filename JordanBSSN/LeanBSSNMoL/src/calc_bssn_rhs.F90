@@ -25,9 +25,10 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                            au(3,3), dethh, Tab(4,4)
 
   ! Scalar field
-  CCTK_REAL                lphi, lKphi
-  CCTK_REAL                d1_lphi(3), d1_lKphi(3)
-  CCTK_REAL                d2_lphi(3,3), cd2_lphi(3,3) 
+  CCTK_REAL                lphi, lKphi, Bphi, BKphi
+  CCTK_REAL                d1_lphi(3), d1_lKphi(3), d1_Bphi(3), d1_BKphi(3)
+  CCTK_REAL                omega_Bphi, domega_Bphi
+  CCTK_REAL                d2_lphi(3,3), cd2_lphi(3,3), cW_dphi(3,3), d2_Bphi(3,3) 
 
   ! First derivatives
   CCTK_REAL                d1_beta1(3), d1_beta2(3), d1_beta3(3)
@@ -117,10 +118,13 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   logical                   evolve_alp
   logical                   evolve_beta
   logical                   evolve_scalar
+  logical                   evolve_Jordan
 
   evolve_alp    = CCTK_EQUALS(lapse_evolution_method, "LeanBSSNMoL")
   evolve_beta   = CCTK_EQUALS(shift_evolution_method, "LeanBSSNMoL")
   evolve_scalar = CCTK_EQUALS(scalar_evolution_method, "LeanBSSNMoL")
+  evolve_Jordan = CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BD")
+
 
   call CCTK_IsFunctionAliased(istat, "MultiPatch_GetDomainSpecification")
   if (istat == 0) then
@@ -190,8 +194,8 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP PARALLEL DO COLLAPSE(3) &
   !$OMP PRIVATE( i, j, k, di, dj, dk, &
   !$OMP ww, hh, trk, aa, gammat, alph, beta, Tab, dethh, hu, beta_l, &
-  !$OMP lphi, lKphi, &
-  !$OMP d1_lphi, d1_lKphi, d2_lphi, cd2_lphi,&
+  !$OMP lphi, lKphi, Bphi, BKphi, omega_Bphi, domega_Bphi, &
+  !$OMP d1_lphi, d1_lKphi, d2_lphi, cd2_lphi, cW_dphi, &
   !$OMP d1_beta1, d1_beta2, d1_beta3, &
   !$OMP d1_hh11, d1_hh12, d1_hh13, d1_hh22, d1_hh23, d1_hh33, &
   !$OMP d1_aa11, d1_aa12, d1_aa13, d1_aa22, d1_aa23, d1_aa33, &
@@ -2071,8 +2075,65 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
             cd2_lphi(3,1) = cd2_lphi(1,3)
             cd2_lphi(3,2) = cd2_lphi(2,3)
     end if
-    !-------------------------------------------
 
+    !---Calculate scalar field cov derivative W factor
+    if (evolve_scalar) then 
+            aux = 0
+            do a=1,3
+               do b=1,3
+                  cW_dphi(a,b) = d1_lphi(a)*d1_ww(b) + d1_lphi(b)*d1_ww(a) 
+                  aux = aux + hu(a,b)*d1_lphi(a)*d1_ww(b)
+               end do
+            end do 
+
+            cW_dphi = (cW_dphi - aux*hh)/ww
+     end if 
+
+    !-------------------------------------------
+    !------------ Scalar field terms ----------
+    ! First we transform from phi -> varphi 
+    ! For DEF
+    ! Bphi      = exp(varphi*varphi/2)
+    ! BKphi     = Bphi * varphi * Kphi
+    ! d1_Bphi   = Bphi * varphi * d1_phi
+    ! cd2_Bphi   = Bphi * (1 + varphi*varphi) * d1_varphi * d1_varphi + varphi * Bphi * covD_phi
+    ! d1_BKphi  = Bphi*Kphi * (1 + varphi*varphi) * d1_varphi + varphi * Bphi * d1_Kphi
+    ! omega     = 2/(B * varphi) -3/2 
+    ! d1_omega  = -4/(B*Bphi * varphi^4)
+    !
+    ! For BD 
+    ! Bphi      = exp(varphi)
+    ! BKphi     = Bphi*Kphi
+    ! d1_Bphi   = Bphi* d_phi
+    ! cd2_Bphi  = Bphi * (d_phi * d_phi + covd_phi)
+    ! d1_BKphi  = Bphi * ( Kphi * d_phi + d_kphi)
+    ! omega     = 1/(2*k0**2) -3/2 
+    ! d1_omega  = 0   ! omega is constant
+    !
+
+    if (evolve_Jordan) then 
+       if (CCTK_EQUALS(theory,"BD")) then
+            Bphi        = exp(lphi)
+            BKphi       = Bphi * lKphi
+            omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-3.0d0/2.0d0
+            domega_Bphi = 0.0d0 
+            d1_Bphi     = Bphi * d1_lphi 
+            d1_BKphi    = Bphi * ( lKphi*d1_lphi + d1_lKphi)
+            do a=1,3
+                do b=1,3
+                    d2_Bphi(a,b) = Bphi * ( d1_lphi(a)*d1_lphi(b) + cd2_lphi(a,b) + cW_dphi(a,b) )
+                end do 
+            end do
+            if (r(i,j,k)==0.0) THEN
+            write(*,*) "---------------------------" 
+            write(*,*) "Bphi ", Bphi 
+            write(*,*) "BKphi ", BKphi
+            write(*,*) "d1_Bphi ", d1_Bphi
+            write(*,*) "d1_BKphi ", d1_BKphi
+            write(*,*) "d2_Bphi ", d2_Bphi
+            end if
+       end if
+    end if
 
     !------------ Ricci Tensor -----------------
     ! Note: we implement W^2 R_{ij}
@@ -2358,7 +2419,14 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                srcSijTF = srcSij - srcS_ww2 * hh / 3
        
                src_trT = srcS_ww2 * ww*ww - srcE
-        
+               
+               if(evolve_Jordan) then
+                       srcE     = srcE/Bphi
+                       srcS_ww2 = srcS_ww2/Bphi
+                       srcSijTF = srcSijTF/Bphi
+                       srcji    = srcji/Bphi
+                end if
+
        !------------ Correct source terms ---------
        rhs_trk    = rhs_trk    + pi4  * alph * (srcE + ww*ww * srcS_ww2)
        rhs_aa     = rhs_aa     - pi8  * alph * ww*ww * srcSijTF
@@ -2463,7 +2531,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_Kphi(i,j,k) = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)
            end if
 
-           if (CCTK_EQUALS(theory,"decoupling")) then 
+           if (CCTK_EQUALS(theory,"decoupling") .OR. CCTK_EQUALS(theory,"BD")) then  
                    rhs_lphi  = rhs_lphi- alph * lKphi
                    rhs_lKphi = rhs_lKphi - alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi) !add h^{ab} D_{a}D_{b} phi 
                    rhs_lKphi = rhs_lKphi + alph*trk*lKphi -ww*ww*tr_dalp_dphi 
