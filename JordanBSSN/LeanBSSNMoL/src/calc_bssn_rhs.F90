@@ -27,8 +27,9 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   ! Scalar field
   CCTK_REAL                lphi, lKphi, Bphi, BKphi
   CCTK_REAL                d1_lphi(3), d1_lKphi(3), d1_Bphi(3), d1_BKphi(3)
-  CCTK_REAL                omega_Bphi, domega_Bphi
+  CCTK_REAL                omega_Bphi, domega_Bphi, F_phi
   CCTK_REAL                d2_lphi(3,3), cd2_lphi(3,3), cW_dphi(3,3), d2_Bphi(3,3) 
+  CCTK_REAL                trk_phi,trk_omega, aa_omega(3,3), aa_phi(3,3), gammat_omega(3), gammat_phi(3)
 
   ! First derivatives
   CCTK_REAL                d1_beta1(3), d1_beta2(3), d1_beta3(3)
@@ -62,6 +63,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                            tf_c_ll(3,3), tf_c_ri(3,3), gamcon(3)
   CCTK_REAL                tr_cd2_ww, tr_dww_dww, aux
   CCTK_REAL                tr_cd2_phi, tr_dww_dphi, tr_dalp_dphi, tr_dphi_dphi
+  CCTK_REAL                tr_cd2_Bphi, tr_dBphi_dBphi
   CCTK_REAL                divbeta, aadbeta(3,3), hhdbeta(3,3)
 
   ! Matter variables
@@ -194,7 +196,8 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP PARALLEL DO COLLAPSE(3) &
   !$OMP PRIVATE( i, j, k, di, dj, dk, &
   !$OMP ww, hh, trk, aa, gammat, alph, beta, Tab, dethh, hu, beta_l, &
-  !$OMP lphi, lKphi, Bphi, BKphi, omega_Bphi, domega_Bphi, &
+  !$OMP lphi, lKphi, Bphi, BKphi, omega_Bphi, domega_Bphi, F_phi,&
+  !$OMP trk_omega, trk_phi, aa_omega, aa_phi, gammat_omega, gammat_phi,&
   !$OMP d1_lphi, d1_lKphi, d2_lphi, cd2_lphi, cW_dphi, &
   !$OMP d1_beta1, d1_beta2, d1_beta3, &
   !$OMP d1_hh11, d1_hh12, d1_hh13, d1_hh22, d1_hh23, d1_hh33, &
@@ -208,6 +211,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP ad1_ww, ad1_hh, ad1_trk, ad1_aa, ad1_gammat, ad1_alph, ad1_beta, ad1_lphi, ad1_lKphi,&
   !$OMP cd2_ww, cd2_alph, ri_1, ri_2, ri_3, c_ri, c_ri_ww, c_ri_hh, &
   !$OMP tr_cd2_ww, tr_dww_dww, tr_dalp_dphi, tr_cd2_phi, tr_dww_dphi, tr_dphi_dphi, &
+  !$OMP tr_dBphi_dBphi, tr_cd2_Bphi, &
   !$OMP c_ll, aux, f_shift, divbeta, gamcon, &
   !$OMP rhs_ww, rhs_hh, rhs_trk, rhs_aa, rhs_gammat, rhs_beta, rhs_lphi, rhs_lKphi, &
   !$OMP hhdbeta, aadbeta, tr_ll, sq_aa, a2, trr, tf_c_ll, tf_c_ri, au,  &
@@ -2124,6 +2128,22 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     d2_Bphi(a,b) = Bphi * ( d1_lphi(a)*d1_lphi(b) + cd2_lphi(a,b) + cW_dphi(a,b) )
                 end do 
             end do
+            
+            !---- Calculate traces 
+            tr_cd2_Bphi    = 0.0d0
+            tr_dBphi_dBphi = 0.0d0
+            
+            do l =1,3
+               do m=1,3
+                  tr_cd2_Bphi    = tr_cd2_Bphi + hu(l,m)*d2_Bphi(l,m)
+                  tr_dBphi_dBphi = tr_dBphi_dBphi + hu(l,m)*d1_Bphi(l)*d1_Bphi(m)
+                end do
+             end do
+             
+            tr_cd2_Bphi    = tr_cd2_Bphi * ww*ww
+            tr_dBphi_dBphi = tr_dBphi_dBphi * ww*ww
+
+
             if (r(i,j,k)==0.0) THEN
             write(*,*) "---------------------------" 
             write(*,*) "Bphi ", Bphi 
@@ -2425,6 +2445,9 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                        srcS_ww2 = srcS_ww2/Bphi
                        srcSijTF = srcSijTF/Bphi
                        srcji    = srcji/Bphi
+                    if(CCTK_EQUALS(theory,"BD")) then
+                         F_phi = 0.5d0*k0BD*k0BD*(8*src_trT)
+                    end if
                 end if
 
        !------------ Correct source terms ---------
@@ -2433,6 +2456,44 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        rhs_gammat = rhs_gammat - pi16 * alph * srcji
  !       end if
     end if
+        
+    if(evolve_Jordan) then 
+            trk_omega = alph * omega_Bphi * BKphi * BKphi/(Bphi*Bphi)
+            trk_phi   = alph * (tr_cd2_Bphi -trk*BKphi - 3*F_phi)/Bphi
+                
+            gammat_phi   = 0.0d0
+            gammat_omega = 0.0d0
+            do a=1,3
+               do b=1,3
+                    aa_omega(a,b)  = -alph*omega_Bphi*( d1_Bphi(a)*d1_Bphi(b) - hh(a,b)*tr_dBphi_dBphi/3.0d0 )/(Bphi*Bphi)
+                    aa_phi(a,b)    = -alph*(ww*ww*d2_Bphi(a,b) -hh(a,b)*tr_cd2_Bphi/3.0d0 - aa(a,b)*BKphi)/Bphi
+                    gammat_omega(a)= gammat_omega(a)+hu(a,b)*d1_Bphi(b) 
+                    gammat_phi(a)  = gammat_phi(a) + hu(a,b)*d1_BKphi(b) -(trk*hu(a,b)/3.0d0 + au(a,b))*d1_Bphi(b) 
+               end do
+                    gammat_omega(a)= -2.0d0 * alph * gammat_omega(a) * omega_Bphi * BKphi/(Bphi*Bphi)
+                    gammat_phi(a)  = -2.0d0 * alph * gammat_phi(a)/Bphi 
+            end do 
+
+!            do a=1,3
+ !               gammat_omega(a) = -2.0d0*alph*omega_Bphi*BKphi*hu(a,b)*d1_
+  !          end do
+
+            if (r(i,j,k)==0.0) THEN
+            write(*,*) "---------------------------" 
+            write(*,*) "trk_omega ", trk_omega 
+            write(*,*) "trk_phi ", trk_phi
+            write(*,*) "aa_omega ", aa_omega
+            write(*,*) "aa_phi ", aa_phi
+            write(*,*) "gamma_omega ", gammat_omega
+            write(*,*) "gamma_phi ", gammat_phi
+            end if
+
+            rhs_aa     = rhs_aa + aa_omega + aa_phi
+            rhs_trk    = rhs_trk + trk_omega + trk_phi
+            rhs_gammat = rhs_gammat + gammat_omega + gammat_phi
+ 
+    end if
+
 
     !------------ Write to grid functions ------
     rhs_conf_fac(i,j,k) = rhs_ww
