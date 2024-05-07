@@ -29,9 +29,9 @@ CoordBase::zmin =   0.0
 CoordBase::xmax = 32.0
 CoordBase::ymax = 32.0
 CoordBase::zmax = 32.0
-CoordBase::dx   =   0.8
-CoordBase::dy   =   0.8
-CoordBase::dz   =   0.8
+CoordBase::dx   =   1.0
+CoordBase::dy   =   1.0
+CoordBase::dz   =   1.0
 
 CoordBase::boundary_size_x_lower        = 3
 CoordBase::boundary_size_y_lower        = 3
@@ -242,7 +242,7 @@ LeanBSSNMoL::calculate_constraints		= yes
 
 ScalarBase::scalar_evolution_method		= "LeanBSSNMoL"
 LeanBSSNMoL::theory				= "BD"
-LeanBSSNMoL::k0BD				= 1.0e-2
+LeanBSSNMoL::k0BD				= 1.0e-1
 LeanBSSNMoL::phi_at_inf				= 1.0e-5
 
 ###########################################################
@@ -264,28 +264,28 @@ ADMBase::initial_dtshift        = "zero"
 Hydro_rnsid::rotation_type 	= "uniform"
 Hydro_rnsid::axes_ratio 	= 1.0
 
-Hydro_rnsid::rho_central	= 1.28e-3 #1.7082e-3
+#Hydro_rnsid::rho_central	= 1.28e-3 #1.7082e-3
 Hydro_rnsid::eos_type 		= "poly"
 Hydro_rnsid::RNS_Gamma 		= 2.0
 Hydro_rnsid::RNS_K 		= 100.0
 Hydro_rnsid::save_2Dmodel 	= "no"
-Hydro_rnsid::recover_2Dmodel	= "no"
-Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_JBSSN-9.0.h5 "
+Hydro_rnsid::recover_2Dmodel	= "yes"
+Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_JBSSN-k0_0.1.h5"
 
-#ScalarBase::initial_scalar      = ID_SF_Read2D
+ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
-ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_JBSSN-9.0.h5" 
+ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_JBSSN-k0_0.1.h5" 
 #ScalarBase::initial_scalar	= ID_SF_Const
 ScalarInit::set_const_scalar	= "no"
 #ScalarInit::const_scalar_value	= 1e-2
 ScalarInit::reflect_scalar	= "no"
-ScalarBase::initial_scalar	= ID_SF_Gaussian
+#ScalarBase::initial_scalar	= ID_SF_Gaussian
 ScalarInit::scalar_initialize	= "zero_momentum" #"zero_momentum"
-ScalarInit::l0SF		= 0
-ScalarInit::m0SF		= 0
-ScalarInit::r0SF		= 7.0
-ScalarInit::ampSF		= 1.0e-3
-ScalarInit::widthSF		= 1.0
+#ScalarInit::l0SF		= 0
+#ScalarInit::m0SF		= 0
+#ScalarInit::r0SF		= 7.0
+#ScalarInit::ampSF		= 1.0e-3
+#ScalarInit::widthSF		= 1.0
 
 #JordanFBSSN::phi_at_inf		= 1.0e-8 # between 0.1 and 0.001
 #JordanFBSSN::B_DEF		= 0.0 #10

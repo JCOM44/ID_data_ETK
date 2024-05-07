@@ -321,7 +321,7 @@ void comp_values(double s_gp[SDIV+1],
                 rho_0[s][m]=(energy[s][m]+pressure[s][m])*exp(-enthalpy[s][m]);
   }*/
 
-printf("Central density %lf \n",rho_0[0][0]);
+
    for(s=1;s<=SDIV;s++) {
     D_m[s]=0.0;           /* initialize */
     D_m_0[s]=0.0;
