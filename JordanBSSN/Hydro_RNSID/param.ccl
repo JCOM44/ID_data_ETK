@@ -7,6 +7,12 @@ USES CCTK_INT timelevels
 
 private:
 
+KEYWORD theory "Specify theory"
+{
+ "GR" :: "GR neutron stars"
+ "STT":: "STT neutorn stars"
+} "GR"
+
 ########## -----------------------------------------------------------------
 
 KEYWORD rotation_type "Specify type of rotation law"

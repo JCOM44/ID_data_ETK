@@ -216,6 +216,297 @@ void comp_values(double s_gp[SDIV+1],
                  double **alpha,
                  double **omega,
                  double **energy,
+                 double **pressure,
+                 double **enthalpy,
+                 double **velocity_sq,
+                 double *Mass, 
+                 double *Mass_0, 
+                 double *T, 
+                 double *W, 
+                 double *Omega_K,
+                 double *R_e,
+                 char   rotation_type[],
+		 double **Omega_diff,
+		 double *J)
+{
+ int s,
+     m,
+     n_nearest;
+
+ 
+ double **velocity,                /* velocity */
+        **rho_0,                  /* rest mass density*/ 
+        gama_equator,              /* gama at equator */
+        rho_equator,               /* rho at equator */
+        omega_equator,             /* omega at equator */
+        D_m[SDIV+1],               /* int. quantity for M */
+        D_m_0[SDIV+1],             /* int. quantity for M_0 */ 
+        D_m_p[SDIV+1],             /* int. quantity for M_p */
+        D_J[SDIV+1],               /* int. quantity for J */
+        d_o_e[SDIV+1],
+        d_g_e[SDIV+1],
+        d_r_e[SDIV+1],
+        doe,
+        dge, 
+        dre,
+        vek,
+        s_e,
+        gama_mu_0[SDIV+1],                   
+        rho_mu_0[SDIV+1],                    
+        omega_mu_0[SDIV+1],
+        Mass_p,
+        T_diff,
+        D_T[SDIV+1];               /* int. quantity for J */
+
+        
+   s_e=0.5;
+
+   velocity = array_allocate(1,SDIV,1,MDIV); 
+   rho_0 = array_allocate(1,SDIV,1,MDIV);
+
+   for(s=1;s<=SDIV;s++)
+    for(m=1;m<=MDIV;m++)
+     velocity[s][m]=sqrt(velocity_sq[s][m]);
+ 
+   for(s=1;s<=SDIV;s++) {
+      gama_mu_0[s]=gama[s][1];                   
+      rho_mu_0[s]=rho[s][1];                     
+      omega_mu_0[s]=omega[s][1];                 
+   }
+
+   n_nearest= SDIV/2;
+   gama_equator=interp(s_gp,gama_mu_0,SDIV,s_e, &n_nearest); 
+   rho_equator=interp(s_gp,rho_mu_0,SDIV,s_e, &n_nearest);   
+
+   if(r_ratio==1.0) {
+    omega_equator=0.0;
+   }
+   else {
+    omega_equator=interp(s_gp,omega_mu_0,SDIV,s_e, &n_nearest);
+   }
+
+/* Circumferential radius */
+
+   if(strcmp(eos_type,"tab")==0)
+       (*R_e) = r_e*exp((gama_equator-rho_equator)/2.0);
+/*       (*R_e) = sqrt(KAPPA)*r_e*exp((gama_equator-rho_equator)/2.0); */ /*conversion*/
+   else
+     (*R_e) = r_e*exp((gama_equator-rho_equator)/2.0);
+
+ /* Masses and angular momentum */
+ 
+   (*Mass) = 0.0;              /* initialize */
+   (*Mass_0) = 0.0;
+   Mass_p = 0.0;
+   (*J)=0.0;
+   T_diff = 0.0;
+
+ if(strcmp(eos_type,"tab")==0) {
+   n_nearest=n_tab/2;
+   for(s=1;s<=SDIV;s++)
+      for(m=1;m<=MDIV;m++) {
+           if(energy[s][m]>e_surface)
+          //   rho_0[s][m]=n0_at_e(energy[s][m], log_n0_tab, log_e_tab, n_tab,
+          //                                   &n_nearest)*MB*KSCALE*SQ(C); 
+           //  this conversion factor should be MB*cactusM
+	     rho_0[s][m]=n0_at_e(energy[s][m], log_n0_tab, log_e_tab, n_tab,
+				 &n_nearest)*MB*cactusM;
+           else
+             rho_0[s][m]=0.0;
+      }  
+ }else {
+        for(s=1;s<=SDIV;s++)
+           for(m=1;m<=MDIV;m++)
+                rho_0[s][m]=(energy[s][m]+pressure[s][m])*exp(-enthalpy[s][m]);
+  }
+
+
+   for(s=1;s<=SDIV;s++) {
+    D_m[s]=0.0;           /* initialize */
+    D_m_0[s]=0.0;
+    D_m_p[s]=0.0;
+    D_J[s]=0.0;
+    D_T[s]=0.0;
+
+    for(m=1;m<=MDIV-2;m+=2) {
+     D_m[s] += (1.0/(3.0*(MDIV-1)))*( exp(2.0*alpha[s][m]+gama[s][m])*
+              (((energy[s][m]+pressure[s][m])/(1.0-velocity_sq[s][m]))*
+              (1.0+velocity_sq[s][m]+(2.0*s_gp[s]*sqrt(velocity_sq[s][m])/
+              (1.0-s_gp[s]))*sqrt(1.0-mu[m]*mu[m])*r_e*omega[s][m]*
+              exp(-rho[s][m])) + 2.0*pressure[s][m])
+
+            + 4.0*exp(2.0*alpha[s][m+1]+gama[s][m+1])*
+              (((energy[s][m+1]+pressure[s][m+1])/(1.0-velocity_sq[s][m+1]))*
+              (1.0+velocity_sq[s][m+1]+(2.0*s_gp[s]*sqrt(velocity_sq[s][m+1])/
+              (1.0-s_gp[s]))*sqrt(1.0-mu[m+1]*mu[m+1])*r_e*omega[s][m+1]*
+              exp(-rho[s][m+1])) + 2.0*pressure[s][m+1]) 
+
+            + exp(2.0*alpha[s][m+2]+gama[s][m+2])*
+              (((energy[s][m+2]+pressure[s][m+2])/(1.0-velocity_sq[s][m+2]))*
+              (1.0+velocity_sq[s][m+2]+(2.0*s_gp[s]*sqrt(velocity_sq[s][m+2])/
+              (1.0-s_gp[s]))*sqrt(1.0-mu[m+2]*mu[m+2])*r_e*omega[s][m+2]*
+              exp(-rho[s][m+2])) + 2.0*pressure[s][m+2]));    
+ 
+     D_m_0[s] += (1.0/(3.0*(MDIV-1)))*( exp(2.0*alpha[s][m]+(gama[s][m]
+              -rho[s][m])/2.0)*rho_0[s][m]/sqrt(1.0-velocity_sq[s][m])
+
+             + 4.0* exp(2.0*alpha[s][m+1]+(gama[s][m+1]
+             -rho[s][m+1])/2.0)*rho_0[s][m+1]/sqrt(1.0-velocity_sq[s][m+1])
+         
+             + exp(2.0*alpha[s][m+2]+(gama[s][m+2]
+             -rho[s][m+2])/2.0)*rho_0[s][m+2]/sqrt(1.0-velocity_sq[s][m+2])); 
+ 
+     D_m_p[s] += (1.0/(3.0*(MDIV-1)))*( exp(2.0*alpha[s][m]+(gama[s][m]
+              -rho[s][m])/2.0)*energy[s][m]/sqrt(1.0-velocity_sq[s][m])
+ 
+              + 4.0* exp(2.0*alpha[s][m+1]+(gama[s][m+1]
+              -rho[s][m+1])/2.0)*energy[s][m+1]/sqrt(1.0-velocity_sq[s][m+1])
+          
+             + exp(2.0*alpha[s][m+2]+(gama[s][m+2]
+             -rho[s][m+2])/2.0)*energy[s][m+2]/sqrt(1.0-velocity_sq[s][m+2])); 
+
+     D_J[s] += (1.0/(3.0*(MDIV-1)))*( sqrt(1.0-mu[m]*mu[m])*
+              exp(2.0*alpha[s][m]+gama[s][m]-rho[s][m])*(energy[s][m]
+              +pressure[s][m])*sqrt(velocity_sq[s][m])/(1.0-velocity_sq[s][m])
+  
+              +4.0*sqrt(1.0-mu[m+1]*mu[m+1])*
+              exp(2.0*alpha[s][m+1]+gama[s][m+1]-rho[s][m+1])*(energy[s][m+1]
+              +pressure[s][m+1])*sqrt(velocity_sq[s][m+1])/
+              (1.0-velocity_sq[s][m+1])
+
+              + sqrt(1.0-mu[m+2]*mu[m+2])*
+              exp(2.0*alpha[s][m+2]+gama[s][m+2]-rho[s][m+2])*(energy[s][m+2]
+              +pressure[s][m+2])*sqrt(velocity_sq[s][m+2])/
+              (1.0-velocity_sq[s][m+2]));
+
+     D_T[s] += (1.0/(3.0*(MDIV-1)))*( sqrt(1.0-mu[m]*mu[m])*
+              exp(2.0*alpha[s][m]+gama[s][m]-rho[s][m])*(energy[s][m]
+              +pressure[s][m])*sqrt(velocity_sq[s][m])*Omega_diff[s][m]/
+              (1.0-velocity_sq[s][m])
+  
+              +4.0*sqrt(1.0-mu[m+1]*mu[m+1])*
+              exp(2.0*alpha[s][m+1]+gama[s][m+1]-rho[s][m+1])*(energy[s][m+1]
+              +pressure[s][m+1])*sqrt(velocity_sq[s][m+1])*Omega_diff[s][m+1]/
+              (1.0-velocity_sq[s][m+1])
+
+              + sqrt(1.0-mu[m+2]*mu[m+2])*
+              exp(2.0*alpha[s][m+2]+gama[s][m+2]-rho[s][m+2])*(energy[s][m+2]
+              +pressure[s][m+2])*sqrt(velocity_sq[s][m+2])*Omega_diff[s][m+2]/
+              (1.0-velocity_sq[s][m+2]));
+    }
+   }
+
+    for(s=1;s<=SDIV-4;s+=2) { 
+     (*Mass) += (SMAX/(3.0*(SDIV-1)))*(pow(sqrt(s_gp[s])/(1.0-s_gp[s]),4.0)*
+          D_m[s]+4.0*pow(sqrt(s_gp[s+1])/(1.0-s_gp[s+1]),4.0)*D_m[s+1]
+          +pow(sqrt(s_gp[s+2])/(1.0-s_gp[s+2]),4.0)*D_m[s+2]);
+ 
+     (*Mass_0) += (SMAX/(3.0*(SDIV-1)))*(pow(sqrt(s_gp[s])/(1.0-s_gp[s]),4.0)*
+          D_m_0[s]+4.0*pow(sqrt(s_gp[s+1])/(1.0-s_gp[s+1]),4.0)*D_m_0[s+1]
+          +pow(sqrt(s_gp[s+2])/(1.0-s_gp[s+2]),4.0)*D_m_0[s+2]);
+ 
+     Mass_p += (SMAX/(3.0*(SDIV-1)))*(pow(sqrt(s_gp[s])/(1.0-s_gp[s]),4.0)*
+          D_m_p[s]+4.0*pow(sqrt(s_gp[s+1])/(1.0-s_gp[s+1]),4.0)*D_m_p[s+1]
+          +pow(sqrt(s_gp[s+2])/(1.0-s_gp[s+2]),4.0)*D_m_p[s+2]);
+
+     (*J) += (SMAX/(3.0*(SDIV-1)))*((pow(s_gp[s],3.0)/pow(1.0-s_gp[s],5.0))*
+          D_J[s]+ 4.0*(pow(s_gp[s+1],3.0)/pow(1.0-s_gp[s+1],5.0))*
+          D_J[s+1] + (pow(s_gp[s+2],3.0)/pow(1.0-s_gp[s+2],5.0))*
+          D_J[s+2]);
+
+     T_diff += (SMAX/(3.0*(SDIV-1)))*((pow(s_gp[s],3.0)/pow(1.0-s_gp[s],5.0))*
+          D_T[s]+ 4.0*(pow(s_gp[s+1],3.0)/pow(1.0-s_gp[s+1],5.0))*
+          D_T[s+1] + (pow(s_gp[s+2],3.0)/pow(1.0-s_gp[s+2],5.0))*
+          D_T[s+2]);
+    }
+   
+    if(strcmp(eos_type,"tab")==0) {
+/*	(*Mass) *= 4*PI*sqrt(KAPPA)*C*C*pow(r_e,3.0)/G; conversions
+	(*Mass_0) *= 4*PI*sqrt(KAPPA)*C*C*pow(r_e,3.0)/G;
+	Mass_p *= 4*PI*sqrt(KAPPA)*C*C*pow(r_e,3.0)/G;*/
+	(*Mass) *= 4*PI*pow(r_e,3.0);
+	(*Mass_0) *= 4*PI*pow(r_e,3.0);
+	Mass_p *= 4*PI*pow(r_e,3.0);
+    }
+    else {
+          (*Mass) *= 4*PI*pow(r_e,3.0);
+          (*Mass_0) *= 4*PI*pow(r_e,3.0);
+          Mass_p *= 4*PI*pow(r_e,3.0);
+    }
+ 
+    if(r_ratio==1.0) 
+         (*J)=0.0; 
+    else {    
+          if(strcmp(eos_type,"tab")==0) {
+/*              (*J) *= 4*PI*KAPPA*C*C*C*pow(r_e,4.0)/G;  conversions
+              T_diff *= 2.0*PI*sqrt(KAPPA)*C*C*C*C*pow(r_e,4.0)/G;*/
+              (*J) *= 4*PI*pow(r_e,4.0); 
+              T_diff *= 2.0*PI*pow(r_e,4.0);
+          }
+          else { 
+              (*J) *= 4*PI*pow(r_e,4.0);
+              T_diff *= 2.0*PI*pow(r_e,4.0);
+          } 
+    }
+    if(strcmp(rotation_type,"uniform")==0)
+        (*T)=0.5*(*J)*Omega;
+    else
+        (*T)= T_diff;
+
+
+    if(strcmp(eos_type,"tab")==0)     
+/*	(*W) = Mass_p*C*C - (*Mass)*C*C + (*T); */ /* conversions*/
+	(*W) = Mass_p - (*Mass) + (*T);
+    else 
+      (*W) = Mass_p - (*Mass) + (*T);
+
+
+/* Kepler angular velocity */
+
+/* MODIFY FOR DIFF. ROTATION */
+
+   for(s=1;s<=SDIV;s++) { 
+     d_o_e[s]=deriv_s(omega,s,1);
+     d_g_e[s]=deriv_s(gama,s,1);
+     d_r_e[s]=deriv_s(rho,s,1);
+   }
+
+   n_nearest=SDIV/2; 
+   doe=interp(s_gp,d_o_e,SDIV,s_e, &n_nearest);
+   dge=interp(s_gp,d_g_e,SDIV,s_e, &n_nearest);
+   dre=interp(s_gp,d_r_e,SDIV,s_e, &n_nearest);
+
+  vek=(doe/(8.0+dge-dre))*r_e*exp(-rho_equator) + sqrt(((dge+dre)/(8.0+dge
+        -dre)) + pow((doe/(8.0+dge-dre))*r_e*exp(-rho_equator),2.0));
+
+  if(strcmp(eos_type,"tab")==0) 
+/*      (*Omega_K) = (C/sqrt(KAPPA))*(omega_equator+vek*exp(rho_equator)/r_e); */ /*conversions*/
+      (*Omega_K) = (omega_equator+vek*exp(rho_equator)/r_e); 
+  else 
+    (*Omega_K) = omega_equator + vek*exp(rho_equator)/r_e;
+
+
+   array_free(velocity,1,SDIV,1,MDIV);
+   array_free(rho_0,1,SDIV,1,MDIV);   
+ 
+}
+
+/********************************************************************/
+void comp_values_stt(double s_gp[SDIV+1],
+                 double mu[MDIV+1],
+                 double r_ratio,
+                 double e_surface,
+                 double r_e,
+                 char   eos_type[],
+                 double log_e_tab[MAX_NTAB],
+                 double log_n0_tab[MAX_NTAB],
+                 int    n_tab,
+                 double Omega,
+                 double **rho, 
+                 double **gama, 
+                 double **alpha,
+                 double **omega,
+                 double **energy,
 		 double **rho_0,
                  double **pressure,
                  double **enthalpy,
@@ -491,7 +782,6 @@ void comp_values(double s_gp[SDIV+1],
 //   array_free(rho_0,1,SDIV,1,MDIV);   
  
 }
-
 /*C*/
 /**************************************************************************/
 double dm_dr_is(double r_is, 

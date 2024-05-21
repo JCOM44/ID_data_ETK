@@ -216,7 +216,7 @@ void Hydro_rnsid(const cGH *cctkGH,
       /* COMPUTE POLYTROPIC INDEX AND CENTRAL ENERGY DENSITY */
       n_P=1.0/(eos_ideal_fluid_gamma-1.0);            
       e_center = (eos_k*pow(rho_central,eos_ideal_fluid_gamma)/(eos_ideal_fluid_gamma-1.0)+rho_central);
-
+      printf("e_center = %lf",e_center);
       /* TABULATED EOS OPTION */
       if(strcmp(eos_type,"tab")==0) {
         /* --V0-- load_eos( eos_file, log_e_tab, log_p_tab, log_h_tab, log_n0_tab, Gamma_tab, &n_tab ); */
@@ -310,7 +310,7 @@ void Hydro_rnsid(const cGH *cctkGH,
       make_center( e_center, log_e_tab, log_p_tab, log_h_tab, n_tab, 
                    eos_type, eos_k,eos_ideal_fluid_gamma, &p_center, &h_center); 
 
-//      rho0_center =  (e_center+p_center)*exp(-h_center);
+      rho0_center =  (e_center+p_center)*exp(-h_center);
 
 
 
@@ -424,13 +424,18 @@ void Hydro_rnsid(const cGH *cctkGH,
 
 
       /* COMPUTE EQUILIBRIUM QUANTITIES (Mass, Radius, T/W etc.) */ 
-
+	if (strcmp(theory,"GR") == 0)
       comp_values( s_gp, mu, axes_ratio, e_surface, r_e, eos_type, log_e_tab,
+                   log_n0_tab, n_tab, Omega, rho_potential, gama, alpha, omega, 
+                   energy, pressure, enthalpy, velocity_sq, &Mass, 
+                   &Mass_0, &T, &W, &Omega_K, &R_e, rotation_type,Omega_diff,
+                   &J);
+	if (strcmp(theory, "STT") == 0) 
+      comp_values_stt( s_gp, mu, axes_ratio, e_surface, r_e, eos_type, log_e_tab,
                    log_n0_tab, n_tab, Omega, rho_potential, gama, alpha, omega, 
                    energy, rho_0, pressure, enthalpy, velocity_sq, &Mass, 
                    &Mass_0, &T, &W, &Omega_K, &R_e, rotation_type,Omega_diff,
                    &J);
-
 
       /* TRANSFORM UNITS TO c=G=M_sun=1 */
       /*
