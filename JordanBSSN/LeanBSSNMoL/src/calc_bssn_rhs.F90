@@ -121,12 +121,13 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   logical                   evolve_beta
   logical                   evolve_scalar
   logical                   evolve_Jordan
+  logical                   JordanFrame
 
   evolve_alp    = CCTK_EQUALS(lapse_evolution_method, "LeanBSSNMoL")
   evolve_beta   = CCTK_EQUALS(shift_evolution_method, "LeanBSSNMoL")
   evolve_scalar = CCTK_EQUALS(scalar_evolution_method, "LeanBSSNMoL")
-  evolve_Jordan = CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BD")
-
+  evolve_Jordan = CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BDold")
+  JordanFrame   = CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BD") .OR. evolve_Jordan 
 
   call CCTK_IsFunctionAliased(istat, "MultiPatch_GetDomainSpecification")
   if (istat == 0) then
@@ -2117,7 +2118,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     !
 
     if (evolve_scalar) then      
-       if (CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDsimple")) then                       !---define BD
+       if (CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"BD")) then                       !---define BD
             Bphi        = exp(lphi)
             BKphi       = Bphi * lKphi
             omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-3.0d0/2.0d0
@@ -2131,7 +2132,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
             end do
        end if                                                   ! -- end  Define BD
        
-       if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFdecoupling")) then                      !--- Define DEF
+       if (CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"DEFdecoupling")) then                      !--- Define DEF
                Bphi        = exp(lphi2/2.0d0)
                BKphi       = Bphi*lphi*lKphi
                omega_Bphi  = 2.0d0/(B_DEF*lphi2)-3.0d0/2.0d0
@@ -2469,55 +2470,65 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        
                src_trT = srcS_ww2 * ww*ww - srcE
                
-               if(evolve_Jordan .OR. CCTK_EQUALS(theory,"BDsimple")) then  ! begin evolve Jordan
+               if(JordanFrame) then  ! begin evolve Jordan
                        srcE     = srcE/Bphi
                        srcS_ww2 = srcS_ww2/Bphi
                        srcSijTF = srcSijTF/Bphi
                        srcji    = srcji/Bphi
+                   
+                    if(CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDold")) then
+                        F_phi = 0.5d0*k0BD*k0BD*(8*pi*src_trT)/Bphi
+                    end if
+                    if (CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"DEF")) then
+                         F_phi = pi*B_DEF*src_trT*lphi2  - 1/(2.0d0*Bphi*lphi2) * (BKphi*BKphi - tr_dBphi_dBphi) 
+                     end if
+
+                    trk_omega = omega_Bphi*lKphi*lKphi 
+                    trk_phi   = ww*ww*(tr_cd2_phi+tr_dphi_dphi) - ww*tr_dww_dphi - trk*lKphi -3*F_phi                        
                     
-                   if(CCTK_EQUALS(theory,"BDsimple")) then
-                        F_phi = 0.5d0*k0BD*k0BD*(8*pi*src_trT)
-                        trk_omega = omega_Bphi*lKphi*lKphi 
-                        trk_phi   = ww*ww*tr_dphi_dphi - ww*tr_dww_dphi - trk*lKphi -3*F_phi/3                        
                     gammat_phi   = 0.0d0
                     gammat_omega = 0.0d0
                     do a=1,3
                       do b=1,3
                         aa_omega(a,b)   = d1_lphi(a)*d1_lphi(b) - tr_dphi_dphi * hh(a,b)/3.0d0 
                         aa_phi(a,b)     = ww*ww*(d1_lphi(a)*d1_lphi(b) + cd2_lphi(a,b) + cW_dphi(a,b)) - aa(a,b)*lKphi 
-                        aa_phi(a,b)     = aa_phi(a,b) - ww*hh(a,b)*(ww*tr_dphi_dphi + ww*tr_cd2_phi - tr_dww_dphi)   ! take trace
+                        aa_phi(a,b)     = aa_phi(a,b) - ww*hh(a,b)*(ww*tr_dphi_dphi + ww*tr_cd2_phi - tr_dww_dphi)/3.0d0   ! take trace
                         gammat_omega(a) = gammat_omega(a) + omega_Bphi * lKphi * hu(a,b)*d1_lphi(b) 
-                        gammat_phi(a)   = gammat_phi(a) + hu(a,b)*(d1_lKphi(b) - trk * d1_lphi(b))  - au(a,b)*d1_lphi(b)
+                        gammat_phi(a)   = gammat_phi(a) + hu(a,b)*(d1_lKphi(b) - trk * d1_lphi(b)/3.0d0)  - au(a,b)*d1_lphi(b)
                       end do
                     end do
+                end if                   !--- End JordanFranme 
+
+
+                    if (r(i,j,k)==0.0d0 ) THEN
+                    write(*,*) "---------------------------" 
+                    write(*,*) "r = ", r(i,j,k)
+                    write(*,*) "trk_omega ", trk_omega 
+                    write(*,*) "trk_phi ", trk_phi
+                    write(*,*) "F_phi", F_phi
+                    write(*,*) "aa_omega ", aa_omega
+                    write(*,*) "aa_phi ", aa_phi
+                    write(*,*) "gamma_omega ", gammat_omega
+                    write(*,*) "gamma_phi ", gammat_phi
                     end if
-
-                    if(CCTK_EQUALS(theory,"BD")) then
-                         F_phi = 0.5d0*k0BD*k0BD*(8*pi*src_trT)
-                    end if
-
-                    if (CCTK_EQUALS(theory,"DEF")) then
-                         F_phi = pi*B_DEF*src_trT*lphi2  - 1/(2.0d0*Bphi*lphi2) * (BKphi*BKphi - tr_dBphi_dBphi) 
-                     end if
-
+        
                     if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-                                write(*,*) "------ Matter terms----------------" 
-                                write(*,*) "srcE", srcE
-                                write(*,*) "srcS_ww2 ", srcS_ww2 
-                                write(*,*) "srcSijTF ", srcSijTF
-                                write(*,*) "srcji ", srcji           
-                    end if
-
-                end if                !-- end evolve Jordan
-
+                       write(*,*) "------ Matter terms----------------" 
+                       write(*,*) "srcE", srcE
+                       write(*,*) "srcS_ww2 ", srcS_ww2 
+                       write(*,*) "srcSijTF ", srcSijTF
+                       write(*,*) "srcji ", srcji          
+                       write(*,*) "src_trT", src_trT 
+                    end if     
+                    !
        !------------ Correct source terms ---------
        rhs_trk    = rhs_trk    + pi4  * alph * (srcE + ww*ww * srcS_ww2) !+ alph*(trk_omega + trk_phi)
        rhs_aa     = rhs_aa     - pi8  * alph * ww*ww * srcSijTF
        rhs_gammat = rhs_gammat - pi16 * alph * srcji
 
-      if(CCTK_EQUALS(theory,"BDsimple")) then
-       rhs_trk    = rhs_trk + alph*( omega_Bphi * ww*ww * trk_omega + trk_phi)
-       rhs_aa     = rhs_aa - alph * (aa_omega + aa_phi)
+      if(JordanFrame) then
+       rhs_trk    = rhs_trk + alph*(  trk_omega + trk_phi)
+       rhs_aa     = rhs_aa - alph * (ww*ww*aa_omega + aa_phi )
        rhs_gammat = rhs_gammat - 2.0d0*alph*(gammat_omega + gammat_phi)
        end if
     end if  ! ---- end matter 
@@ -2539,8 +2550,8 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     gammat_phi(a)  = -2.0d0 * alph * gammat_phi(a)/Bphi 
             end do 
 
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-            write(*,*) "---------------------------" 
+            if (r(i,j,k)==0.0) THEN
+            write(*,*) "--------- EvolveJordan------------" 
             write(*,*) "trk_omega ", trk_omega 
             write(*,*) "trk_phi ", trk_phi
             write(*,*) "F_phi", F_phi
@@ -2557,8 +2568,15 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     end if      !--- end evolve Jordan
 
 
+            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+                    write(*,*) "----------  RHS --------------"
+                    write(*,*) "rhs aa ", rhs_aa 
+                    write(*,*) "rhs trk ", rhs_trk
+                    write(*,*) "rhs gamma ", rhs_gammat
+            end if            
     !------------ Write to grid functions ------
     rhs_conf_fac(i,j,k) = rhs_ww
+
 
     rhs_hxx(i,j,k) = rhs_hh(1,1)
     rhs_hxy(i,j,k) = rhs_hh(1,2)
@@ -2621,23 +2639,22 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
            rhs_lKphi = ad1_lKphi
 
            ! Add source to scalar field
-           ! --- Start decouplingEF
-           if (CCTK_EQUALS(theory,"decouplingEF") .OR. CCTK_EQUALS(theory,"DEFdecouplingEF") ) then
+           ! --- Equations in Einstein frame
+           if (CCTK_EQUALS(theory,"BDdecouplingEF") .OR. CCTK_EQUALS(theory,"DEFdecouplingEF") ) then
                    rhs_lphi  = rhs_lphi-2.0d0 * alph * lKphi
                    rhs_lKphi = rhs_lKphi -0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
-                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi
-           ! Eq for Kphi
-!           rhs_lKphi = rhs_lKphi
-
+                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
                    rhs_phi(i,j,k) = rhs_lphi
-                   if (CCTK_EQUALS(theory,"decouplingEF")) then  
-                   rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*k0BD
+                   if (CCTK_EQUALS(theory,"BDdecouplingEF")) then  
+                       rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*k0BD
                    end if
                    if (CCTK_EQUALS(theory,"DEFdecouplingEF")) then
-                   rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*lphi*betaDEF
+                           rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*lphi*betaDEF
                    end if
            end if
-           
+           ! ----- End eqs in Einstein frame
+
+           !----- Equations in Jordan frame
            if (CCTK_EQUALS(theory,"decouplingJ")) then 
                    rhs_lphi  = rhs_lphi- alph * lKphi
                    rhs_lKphi = rhs_lKphi - alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
@@ -2647,50 +2664,27 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_Kphi(i,j,k) = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)
            end if
 
-            if (CCTK_EQUALS(theory,"decoupling") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDsimple")) then  
+            if (JordanFrame) then  
                    rhs_lphi  = rhs_lphi- alph * lKphi
                    rhs_lKphi = rhs_lKphi - alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi) !add h^{ab} D_{a}D_{b} phi 
                    rhs_lKphi = rhs_lKphi + alph*trk*lKphi -ww*ww*tr_dalp_dphi 
                    rhs_lKphi = rhs_lKphi - alph*(ww*ww*tr_dphi_dphi - lKphi*lKphi)
-
-                   rhs_phi(i,j,k) = rhs_lphi
-                   rhs_Kphi(i,j,k) = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
-            end if
-
-            if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFdecoupling")) then
-                   rhs_lphi  = rhs_lphi - alph * lKphi
-
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-            write(*,*) "----- Only define rhs phi------------------" 
-            write(*,*) "rhs phi ",rhs_lphi 
-            write(*,*) "rhs Kphi ", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi  -  alph * ww * (ww*tr_cd2_phi  -  tr_dww_dphi)
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-            write(*,*) "----- add cd2_phi-----------------" 
-            write(*,*) "rhs Kphi ", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi  +  alph * trk * lKphi  -  ww*ww * tr_dalp_dphi
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-            write(*,*) "---------add K*Kphi and dalpdphi------------" 
-            write(*,*) "rhs Kphi ", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi  +  alph * lphi * (ww*ww * tr_dphi_dphi - lKphi*lKphi)
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-            write(*,*) "-------- add nabla phi nabla phi---------------" 
-            write(*,*) "rhs Kphi ", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi + 2*pi*alph*src_trT*B_DEF*lphi/Bphi
-                   
+                if (CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDold")) then
+                        rhs_phi(i,j,k) = rhs_lphi
+                        rhs_Kphi(i,j,k) = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
+                end if
+                if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFold")) then
+                        rhs_phi(i,j,k) = rhs_lphi
+                        rhs_Kphi(i,j,k) = rhs_lKphi + 2*pi*alph*src_trT*B_DEF*lphi/Bphi
+                end if
+            end if                   
 
             if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-            write(*,*) "---------- coupling matter --------------" 
-            write(*,*) "rhs Kphi ", rhs_lKphi
-            end if
-
-                   rhs_phi(i,j,k)  = rhs_lphi 
-                   rhs_Kphi(i,j,k) = rhs_lKphi 
-            end if 
+                    write(*,*) "---------- SF RHS --------------"
+                    write(*,*) "rhs phi ", rhs_lphi 
+                    write(*,*) "rhs Kphi ", rhs_lKphi
+            end if            
+             
 
     end if       !! end evolve scalar field
 
@@ -2763,7 +2757,7 @@ subroutine LeanBSSN_calc_bssn_rhs_bdry( CCTK_ARGUMENTS )
              phi0  = 1.0
              kphi0 = Kphi1_0
      end if
-     if (CCTK_EQUALS(theory, "decoupling") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BDsimple")) then
+     if (CCTK_EQUALS(theory, "decoupling") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD")) then
              phi0  = phi_at_inf
              kphi0 = Kphi1_0
      end if

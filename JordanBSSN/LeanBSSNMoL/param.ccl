@@ -58,17 +58,17 @@ CCTK_INT LeanBSSN_MaxNumSandRVars "The maximum number of save and restore variab
 
 KEYWORD theory "choose theory"
 {
-  "decouplingEF"    :: "Decoupling limit in Einstein frame"
+  "BDdecouplingEF"  :: "BD Decoupling limit in Einstein frame"
   "decouplingJ"	    :: "Decoupling in Jordan frame"
   "decoupling"      :: "Decoupling in Jordan frame, normalized variable"
   "BDdecoupling"    :: "Decoupling limit, only  BD"
   "DEFdecoupling"   :: "Decoupling limit, only DEF"
   "DEFdecouplingEF" :: "Decoupling limit, only DEF, Einstein Frame"
-  "DEFsimple"       :: "DEF theory, equations in terms of phi, not Phi"
-  "BDsimple"        :: "BD theory, equations in terms of phi, not Phi"
+  "DEF"             :: "DEF theory, equations in terms of phi, not Phi"
+  "BD"              :: "BD theory, equations in terms of phi, not Phi"
   "GR"		    :: "no scalar field, pure GR" 
-  "DEF"		    :: "DEF theory, Phi = exp(phi**2)"
-  "BD"	            :: "BD theory, Phi = exp(phi)"
+  "DEFold"	    :: "DEF theory, Phi = exp(phi**2), not tested"
+  "BDold"           :: "BD theory, Phi = exp(phi), not tested"  
 } "GR"
 
 CCTK_REAL phi_at_inf "value of phi at infinity"
