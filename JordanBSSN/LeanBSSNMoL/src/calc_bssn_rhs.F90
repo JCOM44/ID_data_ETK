@@ -26,9 +26,9 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
   ! Scalar field
   CCTK_REAL                lphi, lKphi, Bphi, BKphi, lphi2
-  CCTK_REAL                d1_lphi(3), d1_lKphi(3), d1_Bphi(3), d1_BKphi(3)
+  CCTK_REAL                d1_lphi(3), d1_lKphi(3)
   CCTK_REAL                omega_Bphi, domega_Bphi, F_phi
-  CCTK_REAL                d2_lphi(3,3), cd2_lphi(3,3), cW_dphi(3,3), d2_Bphi(3,3) 
+  CCTK_REAL                d2_lphi(3,3), cd2_lphi(3,3), cW_dphi(3,3) 
   CCTK_REAL                trk_phi,trk_omega, aa_omega(3,3), aa_phi(3,3), gammat_omega(3), gammat_phi(3)
 
   ! First derivatives
@@ -62,8 +62,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                            ri_3(3,3), tr_ll, sq_aa, a2(3,3), trr,            &
                            tf_c_ll(3,3), tf_c_ri(3,3), gamcon(3)
   CCTK_REAL                tr_cd2_ww, tr_dww_dww, aux
-  CCTK_REAL                tr_cd2_phi, tr_dww_dphi, tr_dalp_dphi, tr_dphi_dphi
-  CCTK_REAL                tr_cd2_Bphi, tr_dBphi_dBphi
+  CCTK_REAL                tr_cd2_phi, tr_dww_dphi, tr_dalp_dphi, tr_dphi_dphi, tr_cd2_phi_new
   CCTK_REAL                divbeta, aadbeta(3,3), hhdbeta(3,3)
 
   ! Matter variables
@@ -199,7 +198,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP ww, hh, trk, aa, gammat, alph, beta, Tab, dethh, hu, beta_l, &
   !$OMP lphi, lKphi, Bphi, BKphi, omega_Bphi, domega_Bphi, F_phi, lphi2,&
   !$OMP trk_omega, trk_phi, aa_omega, aa_phi, gammat_omega, gammat_phi,&
-  !$OMP d1_lphi, d1_lKphi, d2_lphi, cd2_lphi, cW_dphi, &
+  !$OMP d1_lphi, d1_lKphi, d2_lphi, cd2_lphi, cW_dphi, tr_cd2_phi_new, &
   !$OMP d1_beta1, d1_beta2, d1_beta3, &
   !$OMP d1_hh11, d1_hh12, d1_hh13, d1_hh22, d1_hh23, d1_hh33, &
   !$OMP d1_aa11, d1_aa12, d1_aa13, d1_aa22, d1_aa23, d1_aa33, &
@@ -212,7 +211,6 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP ad1_ww, ad1_hh, ad1_trk, ad1_aa, ad1_gammat, ad1_alph, ad1_beta, ad1_lphi, ad1_lKphi,&
   !$OMP cd2_ww, cd2_alph, ri_1, ri_2, ri_3, c_ri, c_ri_ww, c_ri_hh, &
   !$OMP tr_cd2_ww, tr_dww_dww, tr_dalp_dphi, tr_cd2_phi, tr_dww_dphi, tr_dphi_dphi, &
-  !$OMP tr_dBphi_dBphi, tr_cd2_Bphi, &
   !$OMP c_ll, aux, f_shift, divbeta, gamcon, &
   !$OMP rhs_ww, rhs_hh, rhs_trk, rhs_aa, rhs_gammat, rhs_beta, rhs_lphi, rhs_lKphi, &
   !$OMP hhdbeta, aadbeta, tr_ll, sq_aa, a2, trr, tf_c_ll, tf_c_ri, au,  &
@@ -584,12 +582,12 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                       -  9*phi1(i-3,j,k-2) +  81*phi1(i-2,j,k-2) -  405*phi1(i-1,j,k-2) +  405*phi1(i+1,j,k-2) -  81*phi1(i+2,j,k-2) +  9*phi1(i+3,j,k-2) &
                       +    phi1(i-3,j,k-3) -   9*phi1(i-2,j,k-3) +   45*phi1(i-1,j,k-3) -   45*phi1(i+1,j,k-3) +   9*phi1(i+2,j,k-3) -    phi1(i+3,j,k-3) ) * odxdz3600
 
-      d2_lphi(2,3) = (  -  phi1(i,j-3,k+3) +   9*phi1(i,j-2,k+3) -   45*phi1(i-1,j,k+3) +   45*phi1(i,j+1,k+3) -   9*phi1(i,j+2,k+3) +    phi1(i,j+3,k+3) &
-                      +  9*phi1(i,j-3,k+2) -  81*phi1(i,j-2,k+2) +  405*phi1(i-1,j,k+2) -  405*phi1(i,j+1,k+2) +  81*phi1(i,j+2,k+2) -  9*phi1(i,j+3,k+2) &
-                      - 45*phi1(i,j-3,k+1) + 405*phi1(i,j-2,k+1) - 2025*phi1(i-1,j,k+1) + 2025*phi1(i,j+1,k+1) - 405*phi1(i,j+2,k+1) + 45*phi1(i,j+3,k+1) &
-                      + 45*phi1(i,j-3,k-1) - 405*phi1(i,j-2,k-1) + 2025*phi1(i-1,j,k-1) - 2025*phi1(i,j+1,k-1) + 405*phi1(i,j+2,k-1) - 45*phi1(i,j+3,k-1) &
-                      -  9*phi1(i,j-3,k-2) +  81*phi1(i,j-2,k-2) -  405*phi1(i-1,j,k-2) +  405*phi1(i,j+1,k-2) -  81*phi1(i,j+2,k-2) +  9*phi1(i,j+3,k-2) &
-                      +    phi1(i,j-3,k-3) -   9*phi1(i,j-2,k-3) +   45*phi1(i-1,j,k-3) -   45*phi1(i,j+1,k-3) +   9*phi1(i,j+2,k-3) -    phi1(i,j+3,k-3) ) * odydz3600
+      d2_lphi(2,3) = (  -  phi1(i,j-3,k+3) +   9*phi1(i,j-2,k+3) -   45*phi1(i,j-1,k+3) +   45*phi1(i,j+1,k+3) -   9*phi1(i,j+2,k+3) +    phi1(i,j+3,k+3) &
+                      +  9*phi1(i,j-3,k+2) -  81*phi1(i,j-2,k+2) +  405*phi1(i,j-1,k+2) -  405*phi1(i,j+1,k+2) +  81*phi1(i,j+2,k+2) -  9*phi1(i,j+3,k+2) &
+                      - 45*phi1(i,j-3,k+1) + 405*phi1(i,j-2,k+1) - 2025*phi1(i,j-1,k+1) + 2025*phi1(i,j+1,k+1) - 405*phi1(i,j+2,k+1) + 45*phi1(i,j+3,k+1) &
+                      + 45*phi1(i,j-3,k-1) - 405*phi1(i,j-2,k-1) + 2025*phi1(i,j-1,k-1) - 2025*phi1(i,j+1,k-1) + 405*phi1(i,j+2,k-1) - 45*phi1(i,j+3,k-1) &
+                      -  9*phi1(i,j-3,k-2) +  81*phi1(i,j-2,k-2) -  405*phi1(i,j-1,k-2) +  405*phi1(i,j+1,k-2) -  81*phi1(i,j+2,k-2) +  9*phi1(i,j+3,k-2) &
+                      +    phi1(i,j-3,k-3) -   9*phi1(i,j-2,k-3) +   45*phi1(i,j-1,k-3) -   45*phi1(i,j+1,k-3) +   9*phi1(i,j+2,k-3) -    phi1(i,j+3,k-3) ) * odydz3600
 
       d2_lphi(2,1) = d2_lphi(1,2)
       d2_lphi(3,1) = d2_lphi(1,3)
@@ -1201,24 +1199,24 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
       
       if (evolve_scalar) then 
       ! d1_phi1(3)
-      d1_lphi(1) = (  -phi1(i+2,j,k) + 8*phi1(i+1,j,k)          &
-                     -8*phi1(i-1,j,k) + phi1(i-2,j,k) ) / dx12 
+      d1_lphi(1) = (   -phi1(i+2,j,k) + 8*phi1(i+1,j,k)          &
+                     -8*phi1(i-1,j,k) +   phi1(i-2,j,k) ) / dx12 
       
-      d1_lphi(2) = (  -phi1(i,j+2,k) + 8*phi1(i,j+1,k)          &
-                     -8*phi1(i,j-1,k) + phi1(i,j-2,k) ) / dy12
+      d1_lphi(2) = (  -phi1(i,j+2,k)  + 8*phi1(i,j+1,k)          &
+                     -8*phi1(i,j-1,k) +   phi1(i,j-2,k) ) / dy12
 
-      d1_lphi(3) = ( -phi1(i,j,k+2) + 8*phi1(i,j,k+1)           &
-                    -8*phi1(i,j,k-1) + phi1(i,j,k-2) )  / dz12  
+      d1_lphi(3) = ( -phi1(i,j,k+2)  + 8*phi1(i,j,k+1)           &
+                    -8*phi1(i,j,k-1) +   phi1(i,j,k-2) )  / dz12  
 
       ! d1_Kphi1(3)
       d1_lKphi(1) = (  -Kphi1(i+2,j,k) + 8*Kphi1(i+1,j,k)          &
-                     -8*Kphi1(i-1,j,k) + Kphi1(i-2,j,k) ) / dx12 
+                     -8*Kphi1(i-1,j,k) +   Kphi1(i-2,j,k) ) / dx12 
       
       d1_lKphi(2) = (  -Kphi1(i,j+2,k) + 8*Kphi1(i,j+1,k)          &
-                     -8*Kphi1(i,j-1,k) + Kphi1(i,j-2,k) ) / dy12
+                     -8*Kphi1(i,j-1,k) +   Kphi1(i,j-2,k) ) / dy12
 
       d1_lKphi(3) = ( -Kphi1(i,j,k+2) + 8*Kphi1(i,j,k+1)           &
-                    -8*Kphi1(i,j,k-1) + Kphi1(i,j,k-2) )  / dz12  
+                    -8*Kphi1(i,j,k-1) +   Kphi1(i,j,k-2) )  / dz12  
       end if 
 
       ! d1_hh(3,3,3)
@@ -1400,33 +1398,36 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
       if (evolve_scalar) then
       !d2_phi(3,3)
-      d2_lphi(1,1) = (  -phi1(i+2,j,k) + 16*phi1(i+1,j,k) - 30*phi1(i,j,k) &
-                    + 16*phi1(i-1,j,k) - phi1(i-2,j,k) ) / dxsq12
 
-      d2_lphi(2,2) = (  -phi1(i,j+2,k) + 16*phi1(i,j+1,k) - 30*phi1(i,j,k) &
-                    + 16*phi1(i,j-1,k) - phi1(i,j-2,k) ) / dysq12
 
-      d2_lphi(3,3) = (  -phi1(i,j,k+2) + 16*phi1(i,j,k+1) - 30*phi1(i,j,k) &
-                    + 16*phi1(i,j,k-1) - phi1(i,j,k-2) ) / dzsq12
+      d2_lphi(1,1) = (   -phi1(i+2,j,k) + 16*phi1(i+1,j,k) - 30*phi1(i,j,k)     &
+                     + 16*phi1(i-1,j,k) -    phi1(i-2,j,k) ) / dxsq12
 
-      d2_lphi(1,2) = ( -   phi1(i-2,j+2,k) +  8*phi1(i-1,j+2,k) -  8*phi1(i+1,j+2,k) +   phi1(i+2,j+2,k)  &
-                       + 8*phi1(i-2,j+1,k) - 64*phi1(i-1,j+1,k) + 64*phi1(i+1,j+1,k) - 8*phi1(i+2,j+1,k)  &
-                       - 8*phi1(i-2,j-1,k) + 64*phi1(i-1,j-1,k) - 64*phi1(i+1,j-1,k) + 8*phi1(i+2,j-1,k)  &
-                       +   phi1(i-2,j-2,k) -  8*phi1(i-1,j-2,k) +  8*phi1(i+1,j-2,k) -   phi1(i+2,j-2,k) ) / dxdy144
+      d2_lphi(2,2) = (   -phi1(i,j+2,k) + 16*phi1(i,j+1,k) - 30*phi1(i,j,k)     &
+                     + 16*phi1(i,j-1,k) -    phi1(i,j-2,k) ) / dysq12
 
-      d2_lphi(1,3) = ( -   phi1(i-2,j,k+2) +  8*phi1(i-1,j,k+2) -  8*phi1(i+1,j,k+2) +   phi1(i+2,j,k+2)  &
-                       + 8*phi1(i-2,j,k+1) - 64*phi1(i-1,j,k+1) + 64*phi1(i+1,j,k+1) - 8*phi1(i+2,j,k+1)  &
-                       - 8*phi1(i-2,j,k-1) + 64*phi1(i-1,j,k-1) - 64*phi1(i+1,j,k-1) + 8*phi1(i+2,j,k-1)  &
-                       +   phi1(i-2,j,k-2) -  8*phi1(i-1,j,k-2) +  8*phi1(i+1,j,k-2) -   phi1(i+2,j,k-2) ) / dxdz144
+      d2_lphi(3,3) = (   -phi1(i,j,k+2) + 16*phi1(i,j,k+1) - 30*phi1(i,j,k)     &
+                     + 16*phi1(i,j,k-1) -    phi1(i,j,k-2) ) / dzsq12
 
-      d2_lphi(2,3) = ( -   phi1(i,j-2,k+2) +  8*phi1(i,j-1,k+2) -  8*phi1(i,j+1,k+2) +   phi1(i,j+2,k+2)  &
-                       + 8*phi1(i,j-2,k+1) - 64*phi1(i,j-1,k+1) + 64*phi1(i,j+1,k+1) - 8*phi1(i,j+2,k+1)  &
-                       - 8*phi1(i,j-2,k-1) + 64*phi1(i,j-1,k-1) - 64*phi1(i,j+1,k-1) + 8*phi1(i,j+2,k-1)  &
-                       +   phi1(i,j-2,k-2) -  8*phi1(i,j-1,k-2) +  8*phi1(i,j+1,k-2) -   phi1(i,j+2,k-2) ) / dydz144
+      d2_lphi(1,2) = (   -phi1(i-2,j+2,k) +  8*phi1(i-1,j+2,k) -  8*phi1(i+1,j+2,k) +   phi1(i+2,j+2,k)   &
+                      + 8*phi1(i-2,j+1,k) - 64*phi1(i-1,j+1,k) + 64*phi1(i+1,j+1,k) - 8*phi1(i+2,j+1,k)   &
+                      - 8*phi1(i-2,j-1,k) + 64*phi1(i-1,j-1,k) - 64*phi1(i+1,j-1,k) + 8*phi1(i+2,j-1,k)   &
+                      +   phi1(i-2,j-2,k) -  8*phi1(i-1,j-2,k) +  8*phi1(i+1,j-2,k) -   phi1(i+2,j-2,k) ) / dxdy144
+
+      d2_lphi(1,3) = (   -phi1(i-2,j,k+2) +  8*phi1(i-1,j,k+2) -  8*phi1(i+1,j,k+2) +   phi1(i+2,j,k+2)   &
+                      + 8*phi1(i-2,j,k+1) - 64*phi1(i-1,j,k+1) + 64*phi1(i+1,j,k+1) - 8*phi1(i+2,j,k+1)   &
+                      - 8*phi1(i-2,j,k-1) + 64*phi1(i-1,j,k-1) - 64*phi1(i+1,j,k-1) + 8*phi1(i+2,j,k-1)   &
+                      +   phi1(i-2,j,k-2) -  8*phi1(i-1,j,k-2) +  8*phi1(i+1,j,k-2) -   phi1(i+2,j,k-2) ) / dxdz144
+
+      d2_lphi(2,3) = (   -phi1(i,j-2,k+2) +  8*phi1(i,j-1,k+2) -  8*phi1(i,j+1,k+2) +   phi1(i,j+2,k+2)   &
+                      + 8*phi1(i,j-2,k+1) - 64*phi1(i,j-1,k+1) + 64*phi1(i,j+1,k+1) - 8*phi1(i,j+2,k+1)   &
+                      - 8*phi1(i,j-2,k-1) + 64*phi1(i,j-1,k-1) - 64*phi1(i,j+1,k-1) + 8*phi1(i,j+2,k-1)   &
+                      +   phi1(i,j-2,k-2) -  8*phi1(i,j-1,k-2) +  8*phi1(i,j+1,k-2) -   phi1(i,j+2,k-2) ) / dydz144
 
       d2_lphi(2,1) = d2_lphi(1,2)
       d2_lphi(3,1) = d2_lphi(1,3)
       d2_lphi(3,2) = d2_lphi(2,3)
+!!!
       end if
 
       ! d2_hh(3,3,3,3)
@@ -1686,13 +1687,16 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
         if (evolve_scalar) then
         ! ad1_phi
-        d1_f(1) = di * ( -3*phi1(i-di,j,k) - 10*phi1(i,j,k) + 18*phi1(i+di,j,k) &
-                        - 6*phi1(i+2*di,j,k) + phi1(i+3*di,j,k) ) / dx12
-        d1_f(2) = dj * ( -3*phi1(i,j-dj,k) - 10*phi1(i,j,k) + 18*phi1(i,j*dj,k) &
-                        - 6*phi1(i,j+2*dj,k) + phi1(i,j+3*dj,k) ) / dy12
-        d1_f(3) = dk * ( -3*phi1(i,j,k-dk) - 10*phi1(i,j,k) + 18*phi1(i,j,k+dk) &
-                        - 6*phi1(i,j,k+2*dk) + phi1(i,j,k+3*dk) ) / dz12
-        ad1_lphi = beta_l(1)*d1_f(1) + beta_l(2)*d1_f(2) + beta_l(3)*d1_f(3)
+      d1_f(1) = di * ( -3*phi1(i-di,j,k) - 10*phi1(i,j,k) + 18*phi1(i+di,j,k)   &
+                      - 6*phi1(i+2*di,j,k)  + phi1(i+3*di,j,k)) / dx12
+      d1_f(2) = dj * ( -3*phi1(i,j-dj,k) - 10*phi1(i,j,k) + 18*phi1(i,j+dj,k)   &
+                      - 6*phi1(i,j+2*dj,k)  + phi1(i,j+3*dj,k)) / dy12
+      d1_f(3) = dk * ( -3*phi1(i,j,k-dk) - 10*phi1(i,j,k) + 18*phi1(i,j,k+dk)   &
+                      - 6*phi1(i,j,k+2*dk)  + phi1(i,j,k+3*dk)) / dz12
+      ad1_lphi = beta_l(1)*d1_f(1) + beta_l(2)*d1_f(2) + beta_l(3)*d1_f(3)
+
+
+
 
         ! ad1_Kphi
         d1_f(1) = di * ( -3*Kphi1(i-di,j,k) - 10*Kphi1(i,j,k) + 18*Kphi1(i+di,j,k) &
@@ -1891,7 +1895,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
         ad1_lphi = beta_l(1)*d1_lphi(1) + beta_l(2)*d1_lphi(2) + beta_l(3)*d1_lphi(3)
 
         ! ad1_Kphi
-        ad1_lKphi = beta_l(1)*d1_lphi(1) + beta_l(2)*d1_lphi(2) + beta_l(3)*d1_lphi(3)
+        ad1_lKphi = beta_l(1)*d1_lKphi(1) + beta_l(2)*d1_lKphi(2) + beta_l(3)*d1_lKphi(3)
         end if
 
         ! ad1_hh(3,3)
@@ -2117,77 +2121,53 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     ! d1_omega  = 0   ! omega is constant
     !
 
-    if (evolve_scalar) then      
+    if (evolve_scalar) then      ! Begin evolveScalar
        if (CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"BD")) then                       !---define BD
             Bphi        = exp(lphi)
             BKphi       = Bphi * lKphi
             omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-3.0d0/2.0d0
             domega_Bphi = 0.0d0 
-            d1_Bphi     = Bphi * d1_lphi 
-            d1_BKphi    = Bphi * ( lKphi*d1_lphi + d1_lKphi)
-            do a=1,3
-                do b=1,3
-                    d2_Bphi(a,b) = Bphi * ( d1_lphi(a)*d1_lphi(b) + cd2_lphi(a,b) + cW_dphi(a,b) )
-                end do 
-            end do
+            
        end if                                                   ! -- end  Define BD
        
        if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"DEFdecoupling")) then                      !--- Define DEF
                Bphi        = exp(lphi2/2.0d0)
                BKphi       = Bphi*lphi*lKphi
                omega_Bphi  = 2.0d0/(B_DEF*lphi2)-3.0d0/2.0d0
-               domega_Bphi = -4.0d0/(B_DEF*lphi2*lphi2*Bphi)
-               d1_Bphi     = lphi*Bphi*d1_lphi
-               d1_BKphi    = Bphi * ( lKphi*(lphi2+1.0d0)*d1_lphi + lphi*d1_lKphi)
-               do a=1,3
-                  do b=1,3
-                      d2_Bphi(a,b) = Bphi*(1.0d0  + lphi2) * d1_lphi(a)*d1_lphi(b) + Bphi*lphi*(cd2_lphi(a,b) + cW_dphi(a,b))
-                  end do
-               end do
+               domega_Bphi = -4.0d0/(B_DEF*lphi2*lphi2*Bphi)               
        end if                                                   ! -- end define DEF
 
-            !---- Calculate traces 
-            tr_cd2_Bphi    = 0.0d0
-            tr_dBphi_dBphi = 0.0d0
-            
-            do l =1,3
-               do m=1,3
-                  tr_cd2_Bphi    = tr_cd2_Bphi + hu(l,m)*d2_Bphi(l,m)
-                  tr_dBphi_dBphi = tr_dBphi_dBphi + hu(l,m)*d1_Bphi(l)*d1_Bphi(m)
-                end do
-             end do
-             
-            tr_cd2_Bphi    = tr_cd2_Bphi * ww*ww
-            tr_dBphi_dBphi = tr_dBphi_dBphi * ww*ww
-
+            !---- Calculate traces             
 
                 tr_dalp_dphi = 0
                 tr_cd2_phi   = 0
+                tr_cd2_phi_new = 0 
                 tr_dww_dphi  = 0
                 tr_dphi_dphi = 0
                 do a =1,3
                    do b = 1,3
                         tr_dalp_dphi = tr_dalp_dphi + hu(a,b) * d1_alph(a)*d1_lphi(b)
                         tr_cd2_phi   = tr_cd2_phi   + hu(a,b) * cd2_lphi(a,b)
+                        tr_cd2_phi_new   = tr_cd2_phi_new   + hu(a,b) * (cd2_lphi(a,b)+cW_dphi(a,b) )*ww*ww
                         tr_dww_dphi  = tr_dww_dphi  + hu(a,b) * d1_ww(a) * d1_lphi(b)
                         tr_dphi_dphi = tr_dphi_dphi + hu(a,b) * d1_lphi(a)*d1_lphi(b)
                     end do
                 end do
 
-
-
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+            if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
             write(*,*) "---------------------------" 
+            write(*,*) "---------------------------"
+            write(*,*) " r= ", r(i,j,k) 
             write(*,*) "Bphi ", Bphi 
             write(*,*) "BKphi ", BKphi
-            write(*,*) "d1_Bphi ", d1_Bphi
-            write(*,*) "d1_BKphi ", d1_BKphi
-            write(*,*) "d2_Bphi ", d2_Bphi
-            write(*,*) "omega ", omega_Bphi
-            write(*,*) "d_omega ", domega_Bphi
+            write(*,*) "d1_lphi ", d1_lphi
+            write(*,*) "d1_lKphi ", d1_lKphi
+            write(*,*) "d2_lphi ", d2_lphi
+            write(*,*) "phi ", lphi
+            write(*,*) "kphi ", lKphi
             end if
 
-    end if   !--- End if evolve_Jordan
+    end if   !--- End if evolve_scalar
 
     !------------ Ricci Tensor -----------------
     ! Note: we implement W^2 R_{ij}
@@ -2470,6 +2450,17 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        
                src_trT = srcS_ww2 * ww*ww - srcE
                
+                    if (r(i,j,k)==r_debug ) THEN
+                    write(*,*) "------ Matter terms----------------"
+                    write(*,*) "r = ", r_debug
+                    write(*,*) "Tab", Tab 
+                    write(*,*) "srcE", srcE
+                    write(*,*) "srcS_ww2 ", srcS_ww2 
+                    write(*,*) "srcSijTF ", srcSijTF
+                    write(*,*) "srcji ", srcji          
+                    write(*,*) "src_trT", src_trT
+                    end if 
+
                if(JordanFrame) then  ! begin evolve Jordan
                        srcE     = srcE/Bphi
                        srcS_ww2 = srcS_ww2/Bphi
@@ -2522,27 +2513,27 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                 end if                   !--- End JordanFranme 
 
 
-                    if (r(i,j,k)==0.0d0 ) THEN
+                    if (r(i,j,k)==r_debug) THEN
                     write(*,*) "---------------------------" 
                     write(*,*) "r = ", r(i,j,k)
-                    write(*,*) "trk_omega ", trk_omega 
-                    write(*,*) "trk_phi ", trk_phi
-                    write(*,*) "F_phi", F_phi
-                    write(*,*) "aa_omega ", aa_omega
-                    write(*,*) "aa_phi ", aa_phi
-                    write(*,*) "gamma_omega ", gammat_omega
-                    write(*,*) "gamma_phi ", gammat_phi
-                    end if
-        
-                    if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-                       write(*,*) "------ Matter terms----------------" 
-                       write(*,*) "srcE", srcE
-                       write(*,*) "srcS_ww2 ", srcS_ww2 
-                       write(*,*) "srcSijTF ", srcSijTF
-                       write(*,*) "srcji ", srcji          
-                       write(*,*) "src_trT", src_trT 
+                    if(JordanFrame) then  ! begin evolve Jordan
+                            write(*,*) "trk_omega ", trk_omega 
+                            write(*,*) "trk_phi ", trk_phi
+                            write(*,*) "F_phi", F_phi
+                            write(*,*) "aa_omega ", aa_omega
+                            write(*,*) "aa_phi ", aa_phi
+                            write(*,*) "gamma_omega ", gammat_omega                           
+                            write(*,*) "gamma_phi ", gammat_phi 
+                            write(*,*) "------ Matter terms----------------" 
+                            write(*,*) "srcE", srcE
+                            write(*,*) "srcS_ww2 ", srcS_ww2 
+                            write(*,*) "srcSijTF ", srcSijTF
+                            write(*,*) "srcji ", srcji          
+                            write(*,*) "src_trT", src_trT 
+
+                        end if 
                     end if     
-                    !
+!                    !
        !------------ Correct source terms ---------
        rhs_trk    = rhs_trk    + pi4  * alph * (srcE + ww*ww * srcS_ww2) !+ alph*(trk_omega + trk_phi)
        rhs_aa     = rhs_aa     - pi8  * alph * ww*ww * srcSijTF
@@ -2553,44 +2544,10 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        rhs_aa     = rhs_aa - alph * (ww*ww*aa_omega + aa_phi )
        rhs_gammat = rhs_gammat - 2.0d0*alph*(gammat_omega + gammat_phi)
        end if
-    end if  ! ---- end matter 
-        
-    if(evolve_Jordan) then  !--- Start evolve Jordan (outdated)
-            trk_omega = alph * omega_Bphi * BKphi * BKphi/(Bphi*Bphi)
-            trk_phi   = alph * (tr_cd2_Bphi -trk*BKphi - 3*F_phi)/Bphi
-                
-            gammat_phi   = 0.0d0
-            gammat_omega = 0.0d0
-            do a=1,3
-               do b=1,3
-                    aa_omega(a,b)  = -alph*omega_Bphi*( d1_Bphi(a)*d1_Bphi(b) - hh(a,b)*tr_dBphi_dBphi/3.0d0 )/(Bphi*Bphi)
-                    aa_phi(a,b)    = -alph*(ww*ww*d2_Bphi(a,b) -hh(a,b)*tr_cd2_Bphi/3.0d0 - aa(a,b)*BKphi)/Bphi
-                    gammat_omega(a)= gammat_omega(a)+hu(a,b)*d1_Bphi(b) 
-                    gammat_phi(a)  = gammat_phi(a) + hu(a,b)*d1_BKphi(b) -(trk*hu(a,b)/3.0d0 + au(a,b))*d1_Bphi(b) 
-               end do
-                    gammat_omega(a)= -2.0d0 * alph * gammat_omega(a) * omega_Bphi * BKphi/(Bphi*Bphi)
-                    gammat_phi(a)  = -2.0d0 * alph * gammat_phi(a)/Bphi 
-            end do 
-
-            if (r(i,j,k)==0.0) THEN
-            write(*,*) "--------- EvolveJordan------------" 
-            write(*,*) "trk_omega ", trk_omega 
-            write(*,*) "trk_phi ", trk_phi
-            write(*,*) "F_phi", F_phi
-            write(*,*) "aa_omega ", aa_omega
-            write(*,*) "aa_phi ", aa_phi
-            write(*,*) "gamma_omega ", gammat_omega
-            write(*,*) "gamma_phi ", gammat_phi
-            end if
-
-            rhs_aa     = rhs_aa + aa_omega + aa_phi
-            rhs_trk    = rhs_trk + trk_omega + trk_phi
-            rhs_gammat = rhs_gammat + gammat_omega + gammat_phi
- 
-    end if      !--- end evolve Jordan  (outdated)
+    end if  ! ---- end matter         
 
 
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+            if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
                     write(*,*) "----------  RHS --------------"
                     write(*,*) "rhs aa ", rhs_aa 
                     write(*,*) "rhs trk ", rhs_trk
@@ -2667,8 +2624,13 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_lKphi = rhs_lKphi -0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
                    rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
                    rhs_phi(i,j,k) = rhs_lphi
-                   if (CCTK_EQUALS(theory,"BDdecouplingEF")) then  
-                       rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*k0BD
+                   if (CCTK_EQUALS(theory,"BDdecouplingEF")) then 
+                       rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*k0BD    
+                       rhs_Kphi(i,j,k) = rhs_lKphi
+                       if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
+                            write(*,*) "rhs phi ", rhs_lphi 
+                            write(*,*) "rhs Kphi ", rhs_lKphi                            
+                       end if        
                    end if
                    if (CCTK_EQUALS(theory,"DEFdecouplingEF")) then
                            rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*lphi*betaDEF
@@ -2686,50 +2648,72 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_Kphi(i,j,k) = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)
            end if
 
-            if (JordanFrame) then  
+            if (JordanFrame) then  ! Begin Jordan Frame SF ev
                    rhs_lphi  = rhs_lphi- alph * lKphi
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-                    write(*,*) "rhs lkphi advective deriv", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi - alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi) !add h^{ab} D_{a}D_{b} phi 
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-                    write(*,*) "rhs lkphi -alp *ww * (ww*trcd2phi-trdwdphi)", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -ww*ww*tr_dalp_dphi 
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-                    write(*,*) "rhs lkphi +alph*trk kphi - ww*ww*tralpphi", rhs_lKphi
-            end if
-                   rhs_lKphi = rhs_lKphi - alph*(ww*ww*tr_dphi_dphi - lKphi*lKphi)
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
-                    write(*,*) "rhs lkphi-alp(ww*ww*trphiphi-kphi**2)", rhs_lKphi
-            end if
-                if (CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDold")) then
+                    
+!                   if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+!                       write(*,*) "rhs lkphi advective deriv", rhs_lKphi
+!                    end if
+                   
+                   ! rhs_lKphi = rhs_lKphi + alph * ww * (tr_dww_dphi - ww*tr_cd2_phi ) !h^{ab} D_{a}D_{b} phi= W^2 tr_cD2_phi - W tr_dW_dphi
+                    rhs_lKphi = rhs_lKphi - alph*tr_cd2_phi_new &
+                               + alph*trk*lKphi -ww*ww*tr_dalp_dphi &
+                               + alph*(lKphi*lKphi - ww*ww*tr_dphi_dphi) &
+                               + 8.0d0*pi*alph*src_trT*(k0BD*k0BD)/Bphi 
+
+!                    if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+!                        write(*,*) "rhs lkphi -alp *ww * (ww*trcd2phi-trdwdphi)", rhs_lKphi
+!                    end if
+                  
+                   ! rhs_lKphi = rhs_lKphi + alph*trk*lKphi -ww*ww*tr_dalp_dphi 
+                   
+!                    if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+!                        write(*,*) "rhs lkphi +alph*trk kphi - ww*ww*tralpphi", rhs_lKphi
+!                    end if
+                   
+                   ! rhs_lKphi = rhs_lKphi + alph*(lKphi*lKphi - ww*ww*tr_dphi_dphi)
+                    
+!                    if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+!                         write(*,*) "rhs lkphi-alp(ww*ww*trphiphi-kphi**2)", rhs_lKphi
+!                    end if
+
+!                    if (CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDold")) then  ! add coupling term if BD
                         rhs_phi(i,j,k) = rhs_lphi
-                        rhs_lKphi = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
+                     !   rhs_lKphi = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
                         rhs_Kphi(i,j,k) = rhs_lKphi 
-                end if
-                if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFold")) then
+!                    end if
+
+                if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFold")) then  ! add coupling if DEF                        
                         rhs_phi(i,j,k) = rhs_lphi
                         rhs_lKphi = rhs_lKphi + 2*pi*alph*src_trT*B_DEF*lphi/Bphi
                         rhs_Kphi(i,j,k) = rhs_lKphi 
 
                 end if
-            end if                   
 
-            if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
+           end if                   !End Jordan Frame SF ev
+
+            if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
                     write(*,*) "---------- SF RHS --------------"
+                    write(*,*) "r =,", r_debug
                     write(*,*) "tr_cd2_phi ", tr_cd2_phi 
+                    write(*,*) "tr_cd2_phi_new ", tr_cd2_phi_new
+                    write(*,*) "trace term ", -alph*tr_cd2_phi_new
+                    write(*,*) "coupling ", 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
                     write(*,*) "tr_dww_dphi", tr_dww_dphi
+                    write(*,*) "beta" , beta
+                    write(*,*) "beta locl" , beta_l
                     write(*,*) "alpha", alph
                     write(*,*) "ww", ww
-                    write(*,*) "trk", trk
-                    write(*,*) "lKphi", lKphi
+                    write(*,*) "trk", trk                    
                     write(*,*) "tr_dalph_dphi", tr_dalp_dphi
+                    write(*,*) "ad1_phi", ad1_lphi
+                    write(*,*) "ad1_Kphi", ad1_lKphi
                     write(*,*) "tr_dphi_dphi", tr_dphi_dphi
-                    write(*,*) "src_trT", src_trT
-                    write(*,*) "Bphi", Bphi
+                    write(*,*) "src_trT", src_trT                    
                     write(*,*) "rhs phi ", rhs_lphi 
                     write(*,*) "rhs Kphi ", rhs_lKphi
+                    write(*,*) "---------------------"
+                    write(*,*) "---------------------"
             end if            
              
 
@@ -2804,12 +2788,12 @@ subroutine LeanBSSN_calc_bssn_rhs_bdry( CCTK_ARGUMENTS )
              phi0  = 1.0
              kphi0 = Kphi1_0
      end if
-     if (CCTK_EQUALS(theory, "decoupling") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF")) then
+     if (CCTK_EQUALS(theory, "decoupling") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF")) then             
              phi0  = phi_at_inf
              kphi0 = Kphi1_0
      end if
      ierr = NewRad_Apply(cctkGH, phi1, rhs_phi, phi0, one, n_phi1)
-     ierr = NewRad_Apply(cctkGH, Kphi1, rhs_Kphi, Kphi0, one, n_Kphi1)
+     ierr = NewRad_Apply(cctkGH, Kphi1, rhs_Kphi, kphi0, one, n_Kphi1)
   end if
   
 end subroutine LeanBSSN_calc_bssn_rhs_bdry

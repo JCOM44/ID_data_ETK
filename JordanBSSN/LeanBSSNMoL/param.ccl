@@ -76,6 +76,12 @@ CCTK_REAL phi_at_inf "value of phi at infinity"
   *:*
 } 1e5
 
+
+CCTK_REAL r_debug "value of r at which to debug"
+{
+ *:*
+} 0.0
+
 CCTK_REAL k0BD "value of k0 in Brans-Dicke theory"
 {
  *:*

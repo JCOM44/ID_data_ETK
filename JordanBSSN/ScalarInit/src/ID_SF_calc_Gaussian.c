@@ -243,7 +243,7 @@ ID_SF_Gauss (CCTK_ARGUMENTS)
 		psit_re = psit_re+1.0;
 	}
 	if (CCTK_EQUALS (theory, "decoupling") || CCTK_EQUALS(theory,"BD")){
-		psit_re = -(2.0*k0BD)*psit_re+phi_at_inf;
+		psit_re = (2.0*k0BD)*psit_re;
 	}
 
 	if (CCTK_EQUALS (theory, "DEF") || CCTK_EQUALS(theory,"DEFdecoupling")) {

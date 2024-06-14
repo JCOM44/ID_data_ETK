@@ -91,7 +91,7 @@ for(i=1;i<=nx;i++)
                 for(k=1;k<=nz;k++) {
 			ind = i-1+nx*(j-1+ny*(k-1));
 
-			grid_interpSF(phi_td,s_gp,mu_gp,r_e,nx,ny,nz,x_coord,y_coord,z_coord,i,j,k,&phi_ijk,-1);
+			grid_interpSF(phi_td,s_gp,mu_gp,r_e,nx,ny,nz,x_coord,y_coord,z_coord,i,j,k,&phi_ijk,1);
 		/*	if(phi_ijk==0.0){
 				phi_ijk = phi_at_inf; 	
 			}*/
@@ -156,10 +156,18 @@ printf("\n%f",dz12);
                 - 8*phi1[CCTK_GFINDEX3D (cctkGH, i, j, k-1)]
                 + phi1[CCTK_GFINDEX3D (cctkGH, i, j, k-2)]   ) / dz12;
 
-    Kphi1[ind] =  1/(2*alp[ind]) * (betax[ind] * dphi_x 
+
+	if (CCTK_EQUALS (theory, "BDdecouplingEF")){
+    Kphi1[ind] = 1/(2*alp[ind]) * (betax[ind] * dphi_x 
                          + betay[ind] * dphi_y
                         + betaz[ind] * dphi_z );
+						}
+	else    {
 
+    Kphi1[ind] = 1/(alp[ind]) * (betax[ind] * dphi_x 
+                         + betay[ind] * dphi_y
+                        + betaz[ind] * dphi_z );
+		}
         }
      }
   }
