@@ -1701,7 +1701,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
         ! ad1_Kphi
         d1_f(1) = di * ( -3*Kphi1(i-di,j,k) - 10*Kphi1(i,j,k) + 18*Kphi1(i+di,j,k) &
                         - 6*Kphi1(i+2*di,j,k) + Kphi1(i+3*di,j,k) ) / dx12
-        d1_f(2) = dj * ( -3*Kphi1(i,j-dj,k) - 10*Kphi1(i,j,k) + 18*Kphi1(i,j*dj,k) &
+        d1_f(2) = dj * ( -3*Kphi1(i,j-dj,k) - 10*Kphi1(i,j,k) + 18*Kphi1(i,j+dj,k) &
                         - 6*Kphi1(i,j+2*dj,k) + Kphi1(i,j+3*dj,k) ) / dy12
         d1_f(3) = dk * ( -3*Kphi1(i,j,k-dk) - 10*Kphi1(i,j,k) + 18*Kphi1(i,j,k+dk) &
                         - 6*Kphi1(i,j,k+2*dk) + Kphi1(i,j,k+3*dk) ) / dz12
@@ -2122,7 +2122,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     !
 
     if (evolve_scalar) then      ! Begin evolveScalar
-       if (CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"BD")) then                       !---define BD
+       if (CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"onlySF") .OR.  CCTK_EQUALS(theory,"onlymetric") ) then                       !---define BD
             Bphi        = exp(lphi)
             BKphi       = Bphi * lKphi
             omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-3.0d0/2.0d0
@@ -2461,13 +2461,13 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "src_trT", src_trT
                     end if 
 
-               if(JordanFrame) then  ! begin evolve Jordan
+               if(JordanFrame .OR. CCTK_EQUALS(theory,"onlymetric")) then  ! begin evolve Jordan
                        srcE     = srcE/Bphi
                        srcS_ww2 = srcS_ww2/Bphi
                        srcSijTF = srcSijTF/Bphi
                        srcji    = srcji/Bphi
                    
-                    if(CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDold")) then   ! Init BD
+                    if(CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"onlymetric")) then   ! Init BD
                         F_phi = k0BD*k0BD*(8*pi*src_trT)/Bphi                        
 
                         trk_omega = omega_Bphi*lKphi*lKphi 
@@ -2539,9 +2539,9 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        rhs_aa     = rhs_aa     - pi8  * alph * ww*ww * srcSijTF
        rhs_gammat = rhs_gammat - pi16 * alph * srcji
 
-      if(JordanFrame) then
+      if(JordanFrame .OR. CCTK_EQUALS(theory,"onlymetric")) then
        rhs_trk    = rhs_trk + alph*(  trk_omega + trk_phi)
-       rhs_aa     = rhs_aa - alph * (ww*ww*aa_omega + aa_phi )
+       rhs_aa     = rhs_aa - alph * (ww*ww*aa_omega*Omega_Bphi + aa_phi )
        rhs_gammat = rhs_gammat - 2.0d0*alph*(gammat_omega + gammat_phi)
        end if
     end if  ! ---- end matter         
@@ -2576,6 +2576,32 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     rhs_gammatx(i,j,k) = rhs_gammat(1)
     rhs_gammaty(i,j,k) = rhs_gammat(2)
     rhs_gammatz(i,j,k) = rhs_gammat(3)
+
+    if(CCTK_EQUALS(theory,"onlymetric")) then        
+    rhs_axx(i,j,k) = 0.0
+    rhs_axy(i,j,k) = 0.0
+    rhs_axz(i,j,k) = 0.0
+    rhs_ayy(i,j,k) = 0.0
+    rhs_ayz(i,j,k) = 0.0
+    rhs_azz(i,j,k) = 0.0
+    end if
+
+    if (CCTK_EQUALS(theory,"onlySF")) then
+    rhs_tracek(i,j,k) = 0.0
+
+    rhs_axx(i,j,k) = 0.0
+    rhs_axy(i,j,k) = 0.0
+    rhs_axz(i,j,k) = 0.0
+    rhs_ayy(i,j,k) = 0.0
+    rhs_ayz(i,j,k) = 0.0
+    rhs_azz(i,j,k) = 0.0
+
+    rhs_gammatx(i,j,k) = 0.0
+    rhs_gammaty(i,j,k) = 0.0
+    rhs_gammatz(i,j,k) = 0.0
+
+
+    end if
     !-------------------------------------------
 
     !------------ Now for the lapse -----------
@@ -2648,7 +2674,7 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_Kphi(i,j,k) = rhs_lKphi + 8*pi*alph*src_trT*(k0BD*k0BD)
            end if
 
-            if (JordanFrame) then  ! Begin Jordan Frame SF ev
+            if (JordanFrame .OR. CCTK_EQUALS(theory,"onlySF")) then  ! Begin Jordan Frame SF ev
                    rhs_lphi  = rhs_lphi- alph * lKphi
                     
 !                   if (r(i,j,k)==0.0 .AND. show_debug/=0) THEN
@@ -2690,6 +2716,11 @@ subroutine LeanBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
                 end if
 
+                
+                !                if(CCTK_EQUALS(theory,"onlymetric")) then
+                !                       rhs_phi(i,j,k)=0.0
+                !                end if 
+                
            end if                   !End Jordan Frame SF ev
 
             if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
@@ -2788,7 +2819,7 @@ subroutine LeanBSSN_calc_bssn_rhs_bdry( CCTK_ARGUMENTS )
              phi0  = 1.0
              kphi0 = Kphi1_0
      end if
-     if (CCTK_EQUALS(theory, "decoupling") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF")) then             
+     if (CCTK_EQUALS(theory, "onlySF") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF")) then             
              phi0  = phi_at_inf
              kphi0 = Kphi1_0
      end if

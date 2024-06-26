@@ -27,7 +27,7 @@ contains
              + 16*array(i-1, j, k) - array(i-2, j, k) ) / dxsq12
      
 
-     else if (order==6) 
+     else if (order==4) 
         
      d1_array(1) = ( array(i+3,j,k) - 9*array(i+2,j,k) + 45*array(i+1,j,k)  &
                     -array(i-3,j,k) + 9*array(i-2,j,k) - 45*array(i-1,j,k) )
