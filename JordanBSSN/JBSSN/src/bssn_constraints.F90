@@ -7,7 +7,7 @@
 #include "cctk_Parameters.h"
 #include "cctk_Functions.h"
 
-subroutine JordanFBSSN_bssn_constraints( CCTK_ARGUMENTS )
+subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -921,24 +921,24 @@ subroutine JordanFBSSN_bssn_constraints( CCTK_ARGUMENTS )
     !--------------------------------------------------
 
     if (use_jacobian) then
-      call JordanFBSSN_apply_jacobian(d1_trk, jac)
-      call JordanFBSSN_apply_jacobian(d1_gammat1, jac)
-      call JordanFBSSN_apply_jacobian(d1_gammat2, jac)
-      call JordanFBSSN_apply_jacobian(d1_gammat3, jac)
-      call JordanFBSSN_apply_jacobian(d1_aa11, jac)
-      call JordanFBSSN_apply_jacobian(d1_aa12, jac)
-      call JordanFBSSN_apply_jacobian(d1_aa13, jac)
-      call JordanFBSSN_apply_jacobian(d1_aa22, jac)
-      call JordanFBSSN_apply_jacobian(d1_aa23, jac)
-      call JordanFBSSN_apply_jacobian(d1_aa33, jac)
+      call JBSSN_apply_jacobian(d1_trk, jac)
+      call JBSSN_apply_jacobian(d1_gammat1, jac)
+      call JBSSN_apply_jacobian(d1_gammat2, jac)
+      call JBSSN_apply_jacobian(d1_gammat3, jac)
+      call JBSSN_apply_jacobian(d1_aa11, jac)
+      call JBSSN_apply_jacobian(d1_aa12, jac)
+      call JBSSN_apply_jacobian(d1_aa13, jac)
+      call JBSSN_apply_jacobian(d1_aa22, jac)
+      call JBSSN_apply_jacobian(d1_aa23, jac)
+      call JBSSN_apply_jacobian(d1_aa33, jac)
 
-      call JordanFBSSN_apply_jacobian2(d1_ww, d2_ww, jac, hes)
-      call JordanFBSSN_apply_jacobian2(d1_hh11, d2_hh11, jac, hes)
-      call JordanFBSSN_apply_jacobian2(d1_hh12, d2_hh12, jac, hes)
-      call JordanFBSSN_apply_jacobian2(d1_hh13, d2_hh13, jac, hes)
-      call JordanFBSSN_apply_jacobian2(d1_hh22, d2_hh22, jac, hes)
-      call JordanFBSSN_apply_jacobian2(d1_hh23, d2_hh23, jac, hes)
-      call JordanFBSSN_apply_jacobian2(d1_hh33, d2_hh33, jac, hes)
+      call JBSSN_apply_jacobian2(d1_ww, d2_ww, jac, hes)
+      call JBSSN_apply_jacobian2(d1_hh11, d2_hh11, jac, hes)
+      call JBSSN_apply_jacobian2(d1_hh12, d2_hh12, jac, hes)
+      call JBSSN_apply_jacobian2(d1_hh13, d2_hh13, jac, hes)
+      call JBSSN_apply_jacobian2(d1_hh22, d2_hh22, jac, hes)
+      call JBSSN_apply_jacobian2(d1_hh23, d2_hh23, jac, hes)
+      call JBSSN_apply_jacobian2(d1_hh33, d2_hh33, jac, hes)
     end if
 
     d1_gammat(1,:) = d1_gammat1(:)
@@ -1175,4 +1175,4 @@ subroutine JordanFBSSN_bssn_constraints( CCTK_ARGUMENTS )
   end do
   !$OMP END PARALLEL DO
 
-end subroutine JordanFBSSN_bssn_constraints
+end subroutine JBSSN_bssn_constraints

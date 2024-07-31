@@ -7,7 +7,7 @@
 #include "cctk_Parameters.h"
 #include "cctk_Functions.h"
 
-subroutine JordanFBSSN_Boundaries( CCTK_ARGUMENTS )
+subroutine JBSSN_Boundaries( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -24,60 +24,60 @@ subroutine JordanFBSSN_Boundaries( CCTK_ARGUMENTS )
   ! BCs as 'none', which enforces all the symmetry BCs.
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,      &
-       "JordanFBSSN::conf_fac", "none")
+       "JBSSN::conf_fac", "none")
   if (ierr < 0)                                                            &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::conf_fac!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::conf_fac!")
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,      &
-       "JordanFBSSN::hmetric", "none")
+       "JBSSN::hmetric", "none")
   if (ierr < 0)                                                            &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::hmetric!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::hmetric!")
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,      &
-       "JordanFBSSN::hcurv", "none")
+       "JBSSN::hcurv", "none")
   if (ierr < 0)                                                            &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::hcurv!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::hcurv!")
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,      &
-       "JordanFBSSN::trk", "none")
+       "JBSSN::trk", "none")
   if (ierr < 0)                                                            &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::trk!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::trk!")
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,      &
-       "JordanFBSSN::gammat", "none")
+       "JBSSN::gammat", "none")
   if (ierr < 0)                                                            &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::gammat!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::gammat!")
 
-  if (CCTK_EQUALS(lapse_evolution_method, "JordanFBSSN")) then
+  if (CCTK_EQUALS(lapse_evolution_method, "JBSSN")) then
      ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,   &
           "ADMBase::lapse", "none")
      if (ierr < 0)                                                         &
           call CCTK_ERROR("Failed to register BC for ADMBase::lapse!")
   end if
 
-  if (CCTK_EQUALS(shift_evolution_method, "JordanFBSSN")) then
+  if (CCTK_EQUALS(shift_evolution_method, "JBSSN")) then
      ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,   &
           "ADMBase::shift", "none")
      if (ierr < 0)                                                         &
           call CCTK_ERROR("Failed to register BC for ADMBase::shift!")
   end if
 
-  if (CCTK_EQUALS(scalar_evolution_method, "JordanFBSSN")) then
+  if (CCTK_EQUALS(scalar_evolution_method, "JBSSN")) then
      ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,   &
           "ScalarBase::phi", "none")
      if (ierr < 0)                                                         &
-          call CCTK_ERROR("Failed to register BC for ScalarBase::phi1!")
+          call CCTK_ERROR("Failed to register BC for ScalarBase::phi!")
      ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, one, -one,   &
           "ScalarBase::Kphi", "none")
      if (ierr < 0)                                                         &
-          call CCTK_ERROR("Failed to register BC for ScalarBase::Kphi1!")
+          call CCTK_ERROR("Failed to register BC for ScalarBase::Kphi!")
   end if
 
-end subroutine JordanFBSSN_Boundaries
+end subroutine JBSSN_Boundaries
 !
 !=============================================================================
 !
-subroutine JordanFBSSN_Constraints_Boundaries( CCTK_ARGUMENTS )
+subroutine JBSSN_Constraints_Boundaries( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -105,13 +105,13 @@ subroutine JordanFBSSN_Constraints_Boundaries( CCTK_ARGUMENTS )
   end if
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, bndsize, -one, &
-       "JordanFBSSN::ham", "flat")
+       "JBSSN::ham", "flat")
   if (ierr < 0)                                                           &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::ham!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::ham!")
 
   ierr = Boundary_SelectGroupForBC(cctkGH, CCTK_ALL_FACES, bndsize, -one, &
-       "JordanFBSSN::mom", "flat")
+       "JBSSN::mom", "flat")
   if (ierr < 0)                                                           &
-       call CCTK_ERROR("Failed to register BC for JordanFBSSN::mom!")
+       call CCTK_ERROR("Failed to register BC for JBSSN::mom!")
 
-end subroutine JordanFBSSN_Constraints_Boundaries
+end subroutine JBSSN_Constraints_Boundaries

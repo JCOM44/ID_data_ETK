@@ -1,25 +1,19 @@
-# Schedule definitions for thorn JordanFBSSN
+# Schedule definitions for thorn JBSSN
 
-# Schedule lean evolution if evolution_method=JordanFBSSN
-if (CCTK_EQUALS (evolution_method, "JordanFBSSN")) {
+# Schedule  evolution if evolution_method=JBSSN
+if (CCTK_EQUALS (evolution_method, "JBSSN")) {
 
 STORAGE: conf_fac[3], rhs_conf_fac[1]
 STORAGE: hmetric[3], rhs_hmetric[1]
 STORAGE: hcurv[3], rhs_hcurv[1]
 STORAGE: trk[3], rhs_trk[1]
 STORAGE: gammat[3], rhs_gammat[1]
-STORAGE: T_SF[3]
 
-if (CCTK_EQUALS (lapse_evolution_method, "JordanFBSSN")){
+if (CCTK_EQUALS (lapse_evolution_method, "JBSSN")){
      STORAGE: rhs_lapse[1]
 }
 
-if (CCTK_EQUALS (scalar_evolution_method, "JordanFBSSN")){
-     STORAGE: rhs_sf_phi[1]
-     STORAGE: rhs_sfm_kphi[1]
-}
-
-if (CCTK_EQUALS (shift_evolution_method, "JordanFBSSN")){
+if (CCTK_EQUALS (shift_evolution_method, "JBSSN")){
      STORAGE: rhs_shift[1]
 }
 
@@ -29,49 +23,54 @@ if (calculate_constraints)
   STORAGE: mom[3]
 }
 
-schedule JordanFBSSN_ParamCheck AT ParamCheck
+if (CCTK_EQUALS (scalar_evolution_method, "JBSSN")){
+     STORAGE: rhs_sf[1]
+     STORAGE: rhs_sfK[1]
+}
+
+schedule JBSSN_ParamCheck AT ParamCheck
 {
   LANG: C
-} "Check JordanF parameters for consistency"
+} "Check J parameters for consistency"
 
-schedule JordanFBSSN_RegisterSlicing at STARTUP
+schedule JBSSN_RegisterSlicing at STARTUP
 {
   LANG: C
   OPTIONS: meta
 } "Register slicing"
 
-schedule JordanFBSSN_symmetries at BASEGRID
+schedule JBSSN_symmetries at BASEGRID
 {
   LANG: Fortran
   OPTIONS: Global
 } "Register symmetries of the BSSN grid functions"
 
-schedule JordanFBSSN_zero_rhs at BASEGRID after JordanFBSSN_symmetries
+schedule JBSSN_zero_rhs at BASEGRID after JBSSN_symmetries
 {
   LANG: Fortran
 } "Set all rhs functions to zero to prevent spurious nans"
 
-schedule JordanFBSSN_adm2bssn at CCTK_INITIAL after ADMBase_PostInitial
+schedule JBSSN_adm2bssn at CCTK_INITIAL after ADMBase_PostInitial
 {
   LANG: Fortran
   OPTIONS: Local
 } "Convert initial data into BSSN variables"
 
-schedule JordanFBSSN_Boundaries at CCTK_INITIAL after JordanFBSSN_adm2bssn
+schedule JBSSN_Boundaries at CCTK_INITIAL after JBSSN_adm2bssn
 {
   LANG: Fortran
   OPTIONS: LEVEL
-  SYNC: JordanFBSSN::gammat
+  SYNC: JBSSN::gammat
 } "Boundary enforcement"
 
-schedule GROUP ApplyBCs as JordanFBSSN_ApplyBCs at CCTK_INITIAL after JordanFBSSN_Boundaries
+schedule GROUP ApplyBCs as JBSSN_ApplyBCs at CCTK_INITIAL after JBSSN_Boundaries
 {
 } "Apply boundary conditions"
 
 
 # MoL: registration
 
-schedule JordanFBSSN_RegisterVars in MoL_Register
+schedule JBSSN_RegisterVars in MoL_Register
 {
   LANG: C
   OPTIONS: META
@@ -79,35 +78,31 @@ schedule JordanFBSSN_RegisterVars in MoL_Register
 
 
 # MoL: compute source terms, etc
-schedule JordanFBSSN_calc_scalarTmunu in MoL_CalcRHS BEFORE JordanFBSSN_calc_bssn_rhs
-{
- LANG: Fortran
-} "Calculate Tmunu for SF" 
-#
-schedule JordanFBSSN_calc_bssn_rhs in MoL_CalcRHS as JordanFBSSN_CalcRHS
+
+schedule JBSSN_calc_bssn_rhs in MoL_CalcRHS as JBSSN_CalcRHS
 {
   LANG: Fortran
 } "MoL RHS calculation"
 
 if (compute_rhs_at_initial) {
-     schedule JordanFBSSN_calc_bssn_rhs in MoL_PostStep AT POSTINITIAL \
-       as JordanFBSSN_CalcRHS before JordanFBSSN_Boundaries
+     schedule JBSSN_calc_bssn_rhs in MoL_PostStep AT POSTINITIAL \
+       as JBSSN_CalcRHS before JBSSN_Boundaries
      {
        LANG: Fortran
      } "MoL RHS calculation"
 
      if (!z_is_radial) {
-          schedule JordanFBSSN_calc_bssn_rhs_bdry in MoL_PostStep \
-            AT POSTINITIAL as JordanFBSSN_CalcRHS_Bdry \
-            after JordanFBSSN_CalcRHS
+          schedule JBSSN_calc_bssn_rhs_bdry in MoL_PostStep \
+            AT POSTINITIAL as JBSSN_CalcRHS_Bdry \
+            after JBSSN_CalcRHS
           {
             LANG: Fortran
           } "MoL boundary RHS calculation"
         }
 
         if (z_is_radial) {
-             schedule JordanFBSSN_calc_bssn_rhs_bdry_sph in MoL_PostStep \
-               AT POSTINITIAL as JordanFBSSN_CalcRHS_Bdry_Sph
+             schedule JBSSN_calc_bssn_rhs_bdry_sph in MoL_PostStep \
+               AT POSTINITIAL as JBSSN_CalcRHS_Bdry_Sph
              {
                LANG: Fortran
              } "MoL boundary RHS calculation in spherical coordinates"
@@ -116,15 +111,15 @@ if (compute_rhs_at_initial) {
 
 
 if (!z_is_radial) {
-  schedule JordanFBSSN_calc_bssn_rhs_bdry in MoL_CalcRHS as JordanFBSSN_CalcRHS_Bdry \
-           after JordanFBSSN_CalcRHS
+  schedule JBSSN_calc_bssn_rhs_bdry in MoL_CalcRHS as JBSSN_CalcRHS_Bdry \
+           after JBSSN_CalcRHS
   {
     LANG: Fortran
   } "MoL boundary RHS calculation"
 }
 
 if (z_is_radial) {
-  schedule JordanFBSSN_calc_bssn_rhs_bdry_sph in MoL_RHSBoundaries as JordanFBSSN_CalcRHS_Bdry_Sph
+  schedule JBSSN_calc_bssn_rhs_bdry_sph in MoL_RHSBoundaries as JBSSN_CalcRHS_Bdry_Sph
   {
     LANG: Fortran
   } "MoL boundary RHS calculation in spherical coordinates"
@@ -132,7 +127,7 @@ if (z_is_radial) {
 
 if (reset_dethh)
 {
-  schedule JordanFBSSN_reset_detmetric in MoL_PostStep before JordanFBSSN_Boundaries
+  schedule JBSSN_reset_detmetric in MoL_PostStep before JBSSN_Boundaries
   {
     LANG: Fortran
   } "reset dethh = 1"
@@ -140,41 +135,41 @@ if (reset_dethh)
 
 if (make_aa_tracefree)
 {
-  schedule JordanFBSSN_remove_trA in MoL_PostStep before JordanFBSSN_Boundaries after reset_detmetric
+  schedule JBSSN_remove_trA in MoL_PostStep before JBSSN_Boundaries after reset_detmetric
   {
     LANG: Fortran
   } "Remove trace of A"
 }
 
-schedule JordanFBSSN_impose_conf_fac_floor in MoL_PostStep before JordanFBSSN_Boundaries
+schedule JBSSN_impose_conf_fac_floor in MoL_PostStep before JBSSN_Boundaries
 {
   LANG: Fortran
 } "Make sure conformal factor does not drop below specified value"
 
 
-schedule JordanFBSSN_Boundaries in MoL_PostStep
+schedule JBSSN_Boundaries in MoL_PostStep
 {
   LANG: Fortran
   OPTIONS: LEVEL
   SYNC: ADMBase::lapse
   SYNC: ADMBase::shift
-  SYNC: JordanFBSSN::conf_fac
-  SYNC: JordanFBSSN::hmetric
-  SYNC: JordanFBSSN::hcurv
-  SYNC: JordanFBSSN::trk
-  SYNC: JordanFBSSN::gammat
   SYNC: ScalarBase::phi
   SYNC: ScalarBase::Kphi
+  SYNC: JBSSN::conf_fac
+  SYNC: JBSSN::hmetric
+  SYNC: JBSSN::hcurv
+  SYNC: JBSSN::trk
+  SYNC: JBSSN::gammat
 } "MoL boundary enforcement"
 
-schedule GROUP ApplyBCs as JordanFBSSN_ApplyBCs in MoL_PostStep after JordanFBSSN_Boundaries
+schedule GROUP ApplyBCs as JBSSN_ApplyBCs in MoL_PostStep after JBSSN_Boundaries
 {
 } "Apply boundary conditions"
 
 
 # MoL should now be done. update ADM variables here
 
-schedule JordanFBSSN_bssn2adm in MoL_PostStep after JordanFBSSN_ApplyBCs before ADMBase_SetADMVars
+schedule JBSSN_bssn2adm in MoL_PostStep after JBSSN_ApplyBCs before ADMBase_SetADMVars
 {
   LANG: Fortran
   OPTIONS: Local
@@ -185,27 +180,34 @@ schedule JordanFBSSN_bssn2adm in MoL_PostStep after JordanFBSSN_ApplyBCs before 
 
 if (calculate_constraints)
 
-  schedule GROUP JordanFBSSN_constraints AT ANALYSIS
+  schedule GROUP JBSSN_constraints AT ANALYSIS
   {
     LANG: Fortran
   } "Compute constraints"
 
 
-  schedule JordanFBSSN_bssn_constraints IN JordanFBSSN_constraints
+  schedule JBSSN_bssn_constraints IN JBSSN_constraints
   {
     LANG: Fortran
   } "Compute constraints"
 
-  schedule JordanFBSSN_Constraints_Boundaries after JordanFBSSN_bssn_constraints in JordanFBSSN_constraints
+  schedule JBSSN_Constraints_Boundaries after JBSSN_bssn_constraints in JBSSN_constraints
   {
     LANG: Fortran
     OPTIONS: LEVEL
-    SYNC: JordanFBSSN::ham
-    SYNC: JordanFBSSN::mom
+    SYNC: JBSSN::ham
+    SYNC: JBSSN::mom
   } "Enforce symmetry BCs in constraint computation"
 
-  schedule GROUP ApplyBCs as JordanFBSSN_Constraints_ApplyBCs after JordanFBSSN_Constraints_Boundaries in JordanFBSSN_constraints
+  schedule GROUP ApplyBCs as JBSSN_Constraints_ApplyBCs after JBSSN_Constraints_Boundaries in JBSSN_constraints
   {
   } "Apply boundary conditions"
 
-} # end if evolution_method="JordanF_BSSN"
+if(CCTK_EQUALS(theory,"DEFcosh"))
+  schedule Scalar_calc_Tmunu in AddToTmunu as Scalar_AddToTmunu
+  {
+    LANG: Fortran
+  } "Compute the energy-momentum tensor"
+
+
+} # end if evolution_method="JBSSN"

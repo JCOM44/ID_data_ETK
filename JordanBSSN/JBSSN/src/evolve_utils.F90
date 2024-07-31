@@ -6,7 +6,7 @@
 #include "cctk_Arguments.h"
 #include "cctk_Parameters.h"
 
-subroutine JordanFBSSN_remove_trA( CCTK_ARGUMENTS )
+subroutine JBSSN_remove_trA( CCTK_ARGUMENTS )
 
   implicit none
 
@@ -80,11 +80,11 @@ subroutine JordanFBSSN_remove_trA( CCTK_ARGUMENTS )
   end do
   !$OMP END PARALLEL DO
 
-end subroutine JordanFBSSN_remove_trA
+end subroutine JBSSN_remove_trA
 !
 !===========================================================================
 !
-subroutine JordanFBSSN_reset_detmetric( CCTK_ARGUMENTS )
+subroutine JBSSN_reset_detmetric( CCTK_ARGUMENTS )
 
   implicit none
 
@@ -130,11 +130,11 @@ subroutine JordanFBSSN_reset_detmetric( CCTK_ARGUMENTS )
   end do
   !$OMP END PARALLEL DO
 
-end subroutine JordanFBSSN_reset_detmetric
+end subroutine JBSSN_reset_detmetric
 !
 !===========================================================================
 !
-subroutine JordanFBSSN_impose_conf_fac_floor( CCTK_ARGUMENTS )
+subroutine JBSSN_impose_conf_fac_floor( CCTK_ARGUMENTS )
 
   implicit none
 
@@ -157,11 +157,11 @@ subroutine JordanFBSSN_impose_conf_fac_floor( CCTK_ARGUMENTS )
   end do
   !$OMP END PARALLEL DO
 
-end subroutine JordanFBSSN_impose_conf_fac_floor
+end subroutine JBSSN_impose_conf_fac_floor
 !
 !==========================================================================
 !
-subroutine JordanFBSSN_apply_jacobian(dvar, jac)
+subroutine JBSSN_apply_jacobian(dvar, jac)
   implicit none
 
   CCTK_REAL, intent(inout) :: dvar(3)
@@ -178,11 +178,11 @@ subroutine JordanFBSSN_apply_jacobian(dvar, jac)
 
   dvar = xdvar
 
-end subroutine JordanFBSSN_apply_jacobian
+end subroutine JBSSN_apply_jacobian
 !
 !==========================================================================
 !
-subroutine JordanFBSSN_apply_jacobian2(dvar, ddvar, jac, hes)
+subroutine JBSSN_apply_jacobian2(dvar, ddvar, jac, hes)
   implicit none
 
   CCTK_REAL, intent(inout) :: ddvar(3,3), dvar(3)
@@ -212,4 +212,4 @@ subroutine JordanFBSSN_apply_jacobian2(dvar, ddvar, jac, hes)
   dvar  = xdvar
   ddvar = xddvar
 
-end subroutine JordanFBSSN_apply_jacobian2
+end subroutine JBSSN_apply_jacobian2

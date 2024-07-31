@@ -5,7 +5,7 @@
 #include "cctk_Arguments.h"
 #include "cctk_Parameters.h"
 
-void JordanFBSSN_ParamCheck(CCTK_ARGUMENTS){
+void JBSSN_ParamCheck(CCTK_ARGUMENTS){
 
   DECLARE_CCTK_ARGUMENTS;
   DECLARE_CCTK_PARAMETERS;

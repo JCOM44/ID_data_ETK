@@ -1,8 +1,8 @@
 #include <cctk.h>
 #include <Slicing.h>
 
-int JordanFBSSN_RegisterSlicing (void)
+int JBSSN_RegisterSlicing (void)
 {
-  Einstein_RegisterSlicing ("JordanFBSSN");
+  Einstein_RegisterSlicing ("JBSSN");
   return 0;
 }

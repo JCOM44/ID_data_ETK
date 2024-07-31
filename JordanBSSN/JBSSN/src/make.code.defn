@@ -11,6 +11,7 @@ SRCS = adm_vs_bssn.F90      \
        RegisterVars.c       \
        zero_rhs.F90         \
        ParamCheck.c         \
+       finite_differences.F90\
        Scalar_calc_Tmunu.F90
 
 # Subdirectories containing source files

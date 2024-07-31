@@ -1,6 +1,6 @@
-# Interface definition for thorn JordanFBSSN
+# Interface definition for thorn JBSSN
 
-implements: JordanFBSSN
+implements: JBSSN
 inherits:   ADMBase TmunuBase Boundary CoordGauge ScalarBase 
 
 USES INCLUDE: Slicing.h
@@ -67,7 +67,7 @@ USES FUNCTION MoLRegisterConstrainedGroup
 
 public:
 
-
+# see https://einsteintoolkit.org/documentation/ThornDoc/CactusBase/SymBase/
 
 CCTK_REAL conf_fac type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=-0.33333333333333333333' "conformal factor"
 
@@ -129,6 +129,15 @@ CCTK_REAL rhs_shift type=gf timelevels=1 tags='tensortypealias="U" prolongation=
   rhs_betax rhs_betay rhs_betaz
 } "shift vector"
 
+CCTK_REAL rhs_sf type=gf timelevels=1 tags='tensortypealias="Scalar" prolongation="none"'
+{
+  rhs_phi
+} "scalar field"
+
+CCTK_REAL rhs_sfK type=gf timelevels=1 tags='tensortypealias="Scalar" prolongation="none"'
+{
+  rhs_Kphi
+} "scalar field momentum"
 
 CCTK_REAL ham type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=0'
 {
@@ -139,23 +148,3 @@ CCTK_REAL mom type=gf timelevels=3 tags='tensortypealias="D" tensorweight=0'
 {
   mcx mcy mcz
 } "momentum constraints"
-
-
-CCTK_REAL rhs_sf_phi type=gf timelevels=1 tags='tensortypealias="Scalar" tensorweight=0 prolongation="none"' 
-{
-  rhs_phi
-} "Scalar field phi"
-
-
-CCTK_REAL rhs_sfm_kphi type=gf timelevels=1 tags='tensortypealias="Scalar" tensorweight=0 prolongation="none"' 
-{
-  rhs_kphi
-} "Scalar field momentum"
-
-
-CCTK_REAL T_SF type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=0'
-{
-  sfTxx sfTyy sfTzz sfTtt
-  sfTxy sfTxz sfTyz 
-  sfTtx sfTty sfTtz
-} "energy-momentum tensor of scalar field"

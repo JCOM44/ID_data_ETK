@@ -7,7 +7,7 @@
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-subroutine JordanFBSSN_adm2bssn( CCTK_ARGUMENTS )
+subroutine JBSSN_adm2bssn( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -106,9 +106,6 @@ subroutine JordanFBSSN_adm2bssn( CCTK_ARGUMENTS )
     beta(1) = betax(i,j,k)
     beta(2) = betay(i,j,k)
     beta(3) = betaz(i,j,k)
-    
-
-    
     !-------------------------------------------
 
 
@@ -286,12 +283,12 @@ subroutine JordanFBSSN_adm2bssn( CCTK_ARGUMENTS )
                     - 8*hzz(i,j,k-1) +   hzz(i,j,k-2) ) / deltaz12
 
    if (use_jacobian) then
-      call JordanFBSSN_apply_jacobian(d1_hh11, jac)
-      call JordanFBSSN_apply_jacobian(d1_hh12, jac)
-      call JordanFBSSN_apply_jacobian(d1_hh13, jac)
-      call JordanFBSSN_apply_jacobian(d1_hh22, jac)
-      call JordanFBSSN_apply_jacobian(d1_hh23, jac)
-      call JordanFBSSN_apply_jacobian(d1_hh33, jac)
+      call JBSSN_apply_jacobian(d1_hh11, jac)
+      call JBSSN_apply_jacobian(d1_hh12, jac)
+      call JBSSN_apply_jacobian(d1_hh13, jac)
+      call JBSSN_apply_jacobian(d1_hh22, jac)
+      call JBSSN_apply_jacobian(d1_hh23, jac)
+      call JBSSN_apply_jacobian(d1_hh33, jac)
    end if
 
 
@@ -359,11 +356,11 @@ subroutine JordanFBSSN_adm2bssn( CCTK_ARGUMENTS )
   ierr = ExtrapolateGammas(cctkGH, gammaty)
   ierr = ExtrapolateGammas(cctkGH, gammatz)
 
-end subroutine JordanFBSSN_adm2bssn
+end subroutine JBSSN_adm2bssn
 !
 !===========================================================================
 !
-subroutine JordanFBSSN_bssn2adm( CCTK_ARGUMENTS )
+subroutine JBSSN_bssn2adm( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -384,16 +381,14 @@ subroutine JordanFBSSN_bssn2adm( CCTK_ARGUMENTS )
   kyz = ayz / (conf_fac * conf_fac) + tracek * gyz / 3
   kzz = azz / (conf_fac * conf_fac) + tracek * gzz / 3
 
-
-
-  if (CCTK_EQUALS(lapse_evolution_method, "JordanFBSSNMoL")) then
+  if (CCTK_EQUALS(lapse_evolution_method, "JBSSN")) then
      dtalp   = rhs_alp
   end if
 
-  if (CCTK_EQUALS(shift_evolution_method, "JordanFBSSNMoL")) then
+  if (CCTK_EQUALS(shift_evolution_method, "JBSSN")) then
      dtbetax = rhs_betax
      dtbetay = rhs_betay
      dtbetaz = rhs_betaz
   end if
 
-end subroutine JordanFBSSN_bssn2adm
+end subroutine JBSSN_bssn2adm

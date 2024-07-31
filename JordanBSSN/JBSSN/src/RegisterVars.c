@@ -4,7 +4,7 @@
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-void JordanFBSSN_RegisterVars(CCTK_ARGUMENTS)
+void JBSSN_RegisterVars(CCTK_ARGUMENTS)
 {
   DECLARE_CCTK_ARGUMENTS;
   DECLARE_CCTK_PARAMETERS;
@@ -19,104 +19,103 @@ void JordanFBSSN_RegisterVars(CCTK_ARGUMENTS)
   ierr += MoLRegisterConstrainedGroup(group);
 
 
-  if (CCTK_EQUALS(lapse_evolution_method, "JordanFBSSN")){
+  if (CCTK_EQUALS(lapse_evolution_method, "JBSSN")){
     var   = CCTK_VarIndex("ADMBase::alp");
-    rhs   = CCTK_VarIndex("JordanFBSSN::rhs_alp");
+    rhs   = CCTK_VarIndex("JBSSN::rhs_alp");
     ierr += MoLRegisterEvolved(var, rhs);
   }
 
-  if (CCTK_EQUALS(scalar_evolution_method, "JordanFBSSN")){
+  if (CCTK_EQUALS(scalar_evolution_method, "JBSSN")){
     var   = CCTK_VarIndex("ScalarBase::phi1");
-    rhs   = CCTK_VarIndex("JordanFBSSN::rhs_phi");
+    rhs   = CCTK_VarIndex("JBSSN::rhs_phi");
     ierr += MoLRegisterEvolved(var, rhs);
-
+    
     var   = CCTK_VarIndex("ScalarBase::Kphi1");
-    rhs   = CCTK_VarIndex("JordanFBSSN::rhs_kphi");
+    rhs   = CCTK_VarIndex("JBSSN::rhs_Kphi");
     ierr += MoLRegisterEvolved(var, rhs);
-   }
+  }
 
-  if (CCTK_EQUALS(shift_evolution_method, "JordanFBSSN")){
+  if (CCTK_EQUALS(shift_evolution_method, "JBSSN")){
       var   = CCTK_VarIndex("ADMBase::betax");
-      rhs   = CCTK_VarIndex("JordanFBSSN::rhs_betax");
+      rhs   = CCTK_VarIndex("JBSSN::rhs_betax");
       ierr += MoLRegisterEvolved(var, rhs);
 
       var   = CCTK_VarIndex("ADMBase::betay");
-      rhs   = CCTK_VarIndex("JordanFBSSN::rhs_betay");
+      rhs   = CCTK_VarIndex("JBSSN::rhs_betay");
       ierr += MoLRegisterEvolved(var, rhs);
 
       var   = CCTK_VarIndex("ADMBase::betaz");
-      rhs   = CCTK_VarIndex("JordanFBSSN::rhs_betaz");
+      rhs   = CCTK_VarIndex("JBSSN::rhs_betaz");
       ierr += MoLRegisterEvolved(var, rhs);
   }
 
-  var   = CCTK_VarIndex("JordanFBSSN::conf_fac");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_conf_fac");
+  var   = CCTK_VarIndex("JBSSN::conf_fac");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_conf_fac");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::hxx");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_hxx");
+  var   = CCTK_VarIndex("JBSSN::hxx");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_hxx");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::hxy");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_hxy");
+  var   = CCTK_VarIndex("JBSSN::hxy");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_hxy");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::hxz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_hxz");
+  var   = CCTK_VarIndex("JBSSN::hxz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_hxz");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::hyy");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_hyy");
+  var   = CCTK_VarIndex("JBSSN::hyy");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_hyy");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::hyz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_hyz");
+  var   = CCTK_VarIndex("JBSSN::hyz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_hyz");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::hzz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_hzz");
+  var   = CCTK_VarIndex("JBSSN::hzz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_hzz");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::axx");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_axx");
+  var   = CCTK_VarIndex("JBSSN::axx");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_axx");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::axy");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_axy");
+  var   = CCTK_VarIndex("JBSSN::axy");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_axy");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::axz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_axz");
+  var   = CCTK_VarIndex("JBSSN::axz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_axz");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::ayy");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_ayy");
+  var   = CCTK_VarIndex("JBSSN::ayy");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_ayy");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::ayz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_ayz");
+  var   = CCTK_VarIndex("JBSSN::ayz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_ayz");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::azz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_azz");
+  var   = CCTK_VarIndex("JBSSN::azz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_azz");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::tracek");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_tracek");
+  var   = CCTK_VarIndex("JBSSN::tracek");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_tracek");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::gammatx");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_gammatx");
+  var   = CCTK_VarIndex("JBSSN::gammatx");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_gammatx");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::gammaty");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_gammaty");
+  var   = CCTK_VarIndex("JBSSN::gammaty");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_gammaty");
   ierr += MoLRegisterEvolved(var, rhs);
 
-  var   = CCTK_VarIndex("JordanFBSSN::gammatz");
-  rhs   = CCTK_VarIndex("JordanFBSSN::rhs_gammatz");
+  var   = CCTK_VarIndex("JBSSN::gammatz");
+  rhs   = CCTK_VarIndex("JBSSN::rhs_gammatz");
   ierr += MoLRegisterEvolved(var, rhs);
-
 
 
   if (ierr) CCTK_ERROR("Problems registering with MoL");

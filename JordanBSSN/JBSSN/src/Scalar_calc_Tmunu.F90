@@ -2,7 +2,7 @@
 #include "cctk_Arguments.h"
 #include "cctk_Parameters.h"
 
-subroutine JordanFBSSN_calc_scalarTmunu( CCTK_ARGUMENTS )
+subroutine Scalar_calc_Tmunu( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
@@ -11,13 +11,18 @@ subroutine JordanFBSSN_calc_scalarTmunu( CCTK_ARGUMENTS )
   ! Fundamental variables
   CCTK_REAL                alph, beta(3), betad(3)
   CCTK_REAL                gg(4,4), gu(4,4), deth
-  CCTK_REAL                lphi, lKphi
-  CCTK_REAL                Tab(4,4)
+  CCTK_REAL                lphi1, lphi2, lKphi1, lKphi2
+  CCTK_REAL                absphi2
+  CCTK_REAL                Tab(4,4), matter_dens, Tmatt(4,4)
+  CCTK_REAL                A_c, A_c2
 
+  ! Fluxes variables
+  CCTK_REAL                rhoSF, jrSF, jiSF(3), SrrSF, SijSF(3,3)
+  CCTK_REAL                xx(3), rr
 
   ! First derivatives
-  CCTK_REAL                d1_lphi(4)
-
+  CCTK_REAL                d1_lphi1(4), d1_lphi2(4)
+  CCTK_COMPLEX             d1_lphi(4)
 
   ! Misc variables
   CCTK_REAL                dx12, dy12, dz12
@@ -68,17 +73,16 @@ subroutine JordanFBSSN_calc_scalarTmunu( CCTK_ARGUMENTS )
   !$OMP PARALLEL DO COLLAPSE(3) PRIVATE(k,j,i, a,b, aux,&
   !$OMP                                 alph,beta,betad,&
   !$OMP                                 gg,gu,deth,&
-  !$OMP                                 lphi,lKphi,&
-  !$OMP                                 Tab, d1_lphi)
+  !$OMP                                 lphi1,lphi2,lKphi1,lKphi2,&
+  !$OMP                                 absphi2,d1_lphi,&
+  !$OMP                                 Tab, d1_lphi1, d1_lphi2, jac, xx, rr, A_c, A_c2)
   do k = 1+cctk_nghostzones(3), cctk_lsh(3)-cctk_nghostzones(3)
      do j = 1+cctk_nghostzones(2), cctk_lsh(2)-cctk_nghostzones(2)
         do i = 1+cctk_nghostzones(1), cctk_lsh(1)-cctk_nghostzones(1)
 
            !------------ Get local variables ----------
-           lphi     = phi1(i,j,k)
-
-           lKphi    = Kphi1(i,j,k)
-
+           lphi1     = phi1(i,j,k)           
+           lKphi1    = Kphi1(i,j,k)           
 
            alph      = alp(i,j,k)
 
@@ -174,62 +178,118 @@ subroutine JordanFBSSN_calc_scalarTmunu( CCTK_ARGUMENTS )
            !------------- Centered 1st derivatives -----------
 
            ! d1_lphi1(3)
-           d1_lphi(1)  = (   -phi1(i+2,j,k) + 8*phi1(i+1,j,k)                        &
+           d1_lphi1(1)  = (   -phi1(i+2,j,k) + 8*phi1(i+1,j,k)                        &
                            - 8*phi1(i-1,j,k) +   phi1(i-2,j,k) ) / dx12
 
-           d1_lphi(2)  = (   -phi1(i,j+2,k) + 8*phi1(i,j+1,k)                        &
+           d1_lphi1(2)  = (   -phi1(i,j+2,k) + 8*phi1(i,j+1,k)                        &
                            - 8*phi1(i,j-1,k) +   phi1(i,j-2,k) ) / dy12
 
-           d1_lphi(3)  = (   -phi1(i,j,k+2) + 8*phi1(i,j,k+1)                        &
+           d1_lphi1(3)  = (   -phi1(i,j,k+2) + 8*phi1(i,j,k+1)                        &
                            - 8*phi1(i,j,k-1) +   phi1(i,j,k-2) ) / dz12
+                   
 
-           !-------------------------------------------
-           if (use_jacobian) then
-              call JordanFBSSN_apply_jacobian(d1_lphi, jac)
-           end if
+
+           !-------------------------------------------           
            !-------------------------------------------
 
            ! time derivatives
-           d1_lphi(4)  = -2 * alph * lKphi
-
+           d1_lphi1(4)  = -2 * alph * lKphi1           
            do a = 1, 3
-              d1_lphi(4) = d1_lphi(4) + beta(a) * d1_lphi(a)
+              d1_lphi1(4) = d1_lphi1(4) + beta(a) * d1_lphi1(a)              
            end do
 
            !-------------------------------------------
 
-           aux = 0.0                                            
+           ! build complex scalar field           
+           absphi2  = lphi1 *lphi1
 
-           do a = 1, 4
-              do b = 1, 4
-                 aux = aux + gu(a,b) *  d1_lphi(a) * d1_lphi(b)
-              end do
-           end do
+!           aux = mu * mu * absphi2                                            &
+!                * (1 - 2 * V_lambda * absphi2) * (1 - 2 * V_lambda * absphi2)
+
+!           do a = 1, 4
+!              do b = 1, 4
+!                 aux = aux + gu(a,b) *  d1_lphi1(a) * d1_lphi1(b)
+!                 end do
+!           end do
 
            ! compute the stress-energy tensor
            do a = 1, 4
               do b = 1, 4
-                 Tab(a,b) =    ( 2 * d1_lphi(a) * d1_lphi(b)   - gg(a,b) * aux )/ (8*pi)
+                 Tab(a,b) =  (  2.0d0* d1_lphi1(a)  * d1_lphi1(b) )/8*pi   !  &                                      
+                  !        - gg(a,b) * aux )/ (8*pi)
               end do
            end do
 
+           ! Retrieve the value of A
+!           A_c = AEtoJ(i,j,k)
+ !          A_c2 = A_c*A_c
+
+
+
            ! and finally store it in the Tmunu variables
-           sfTtt(i,j,k) =  Tab(4,4) 
-           sfTtx(i,j,k) =  Tab(4,1) 
-           sfTty(i,j,k) =  Tab(4,2) 
-           sfTtz(i,j,k) =  Tab(4,3) 
-           sfTxx(i,j,k) =  Tab(1,1) 
-           sfTxy(i,j,k) =  Tab(1,2) 
-           sfTxz(i,j,k) =  Tab(1,3) 
-           sfTyy(i,j,k) =  Tab(2,2) 
-           sfTyz(i,j,k) =  Tab(2,3) 
-           sfTzz(i,j,k) =  Tab(3,3) 
+           eTtt(i,j,k) = eTtt(i,j,k) + Tab(4,4)
+           eTtx(i,j,k) = eTtx(i,j,k) + Tab(4,1)  
+           eTty(i,j,k) = eTty(i,j,k) + Tab(4,2)
+           eTtz(i,j,k) = eTtz(i,j,k) + Tab(4,3)
+           eTxx(i,j,k) = eTxx(i,j,k) + Tab(1,1)
+           eTxy(i,j,k) = eTxy(i,j,k) + Tab(1,2)
+           eTxz(i,j,k) = eTxz(i,j,k) + Tab(1,3)
+           eTyy(i,j,k) = eTyy(i,j,k) + Tab(2,2)
+           eTyz(i,j,k) = eTyz(i,j,k) + Tab(2,3)
+           eTzz(i,j,k) = eTzz(i,j,k) + Tab(3,3)
 
-
+!           if ( ( compute_fluxes == 1 ) .and. ( use_jacobian .eqv. .false. ) ) then
+!                !--- local coordinates to define local radial coordinate --
+!                xx(1) = x(i,j,k)
+!                xx(2) = y(i,j,k)
+!                xx(3) = z(i,j,k)
+!
+!                rr = sqrt( xx(1)**2 + xx(2)**2 + xx(3)**2 )
+!                if( rr < eps_r ) rr = eps_r
+!                !----------------------------------------------------------
+!
+!                !--- Eulerian energy density ------------------------------
+!                rhoSF = 0
+!                rhoSF = Tab(4,4) / ( alph * alph )
+!
+!                !--- Eulerian energy-momentum flux ------------------------                
+!                jiSF = 0
+!                do a = 1, 3
+!                    do b = 1, 3
+!                        do c = 1, 3
+!                            jiSF(a) = jiSF(a) + gg(a,b) * gu(b,c) * Tab(c,4)
+!                        end do
+!                    end do
+!                end do
+!                !jiSF =  - jiSF
+!                jiSF =  - jiSF / alph
+!
+!                !--- Trasformation to radial spherical coordinate ---------
+!                jrSF = 0
+!                do a = 1, 3
+!                    jrSF = jrSF + jiSF(a) * xx(a) / rr
+!                end do
+!                !----------------------------------------------------------
+!                !--- Spatial stress tensor --------------------------------                
+!                !--- Trasformation to radial spherical coordinate ---------
+!                SrrSF = 0
+!                do a = 1, 3
+!                  do b = 1, 3
+!                    SrrSF = SrrSF + Tab(a,b) * xx(a) / rr * xx(b) / rr
+!                  end do
+!                end do
+!                !----------------------------------------------------------
+!                !------------ Write to grid functions ---------------------
+!                rhoSF_gf(i,j,k)    = rhoSF
+!                jrSF_gf(i,j,k)     = jrSF
+!                SrrSF_gf(i,j,k)    = SrrSF                
+!                !----------------------------------------------------------
+!
+!           end if
 
         end do
      end do
   end do
   !$OMP END PARALLEL DO
 
-end subroutine JordanFBSSN_calc_scalarTmunu
+end subroutine Scalar_calc_Tmunu

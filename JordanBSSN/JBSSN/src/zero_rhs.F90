@@ -4,12 +4,12 @@
 #include "cctk_Functions.h"
 #include "cctk_Parameters.h"
 
-subroutine JordanFBSSN_zero_rhs( CCTK_ARGUMENTS )
+subroutine JBSSN_zero_rhs( CCTK_ARGUMENTS )
 
   implicit none
   DECLARE_CCTK_ARGUMENTS
-	DECLARE_CCTK_FUNCTIONS
-	DECLARE_CCTK_PARAMETERS
+  DECLARE_CCTK_FUNCTIONS
+  DECLARE_CCTK_PARAMETERS
 
   rhs_conf_fac = 0
 
@@ -33,29 +33,18 @@ subroutine JordanFBSSN_zero_rhs( CCTK_ARGUMENTS )
   rhs_gammaty = 0
   rhs_gammatz = 0
 
-  if (CCTK_EQUALS(lapse_evolution_method, "JordanFBSSN")) then
+  if (CCTK_EQUALS(lapse_evolution_method, "JBSSN")) then
      rhs_alp = 0
   end if
 
-  if (CCTK_EQUALS(shift_evolution_method, "JordanFBSSN")) then
+  if (CCTK_EQUALS(shift_evolution_method, "JBSSN")) then
      rhs_betax = 0
      rhs_betay = 0
      rhs_betaz = 0
   end if
-  
-  if (CCTK_EQUALS(scalar_evolution_method, "JordanFBSSN")) then
-  rhs_phi = 0
-  rhs_kphi = 0
-  
-  sfTxx = 0
-  sfTyy = 0
-  sfTzz = 0
-  sfTtt = 0
-  sfTxy = 0
-  sfTxz = 0
-  sfTyz = 0
-  sfTtx = 0
-  sfTty = 0
-  sfTtz = 0
+
+  if (CCTK_EQUALS(scalar_evolution_method, "JBSSN")) then
+     rhs_phi = 0
+     rhs_Kphi = 0
   end if
-end subroutine JordanFBSSN_zero_rhs
+end subroutine JBSSN_zero_rhs
