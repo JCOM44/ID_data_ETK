@@ -6,21 +6,24 @@
 !           calc_ad1(array, i,j,k, order, dx,dy,dz, di,dj,dk)
 
 
+#include "cctk.h"
+#include "cctk_Arguments.h"
+#include "cctk_Parameters.h"
       
 
-module finite_difference_mod
+!module finite_difference_mod
 
-use, intrinsic :: iso_fortran_env, only: real64
-
-
-implicit none  
-  private
-  public :: calc_d1, calc_d2, calc_ad1
+!use, intrinsic :: iso_fortran_env, only: real64
 
 
-contains
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!implicit none  
+!  private
+!  public :: calc_d1, calc_d2, calc_ad1
+!
+!
+!contains
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !   1st derivative of  grid  function f(x,y,z)       
 !     inputs:
 !       array: grid function  f(x,y,z)
@@ -31,13 +34,13 @@ contains
 !         d1_array(3): derivative of array 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  function calc_d1(array, i, j, k, order, dx,dy,dz) result(d1_array)
+  subroutine calc_d1(array, i, j, k, order, dx,dy,dz, d1_array)
     implicit none
 
-    real(real64), dimension(:,:,:), intent(in) :: array
-    integer, intent(in) :: i, j, k, order
-    real(real64), intent(in) :: dx, dy, dz
-    real(real64) ::  d1_array(3)
+    CCTK_REAL, dimension(:,:,:), intent(in) :: array
+    CCTK_INT, intent(in) :: i, j, k, order
+    CCTK_REAL  dx, dy, dz
+    CCTK_REAL, intent(inout) ::  d1_array(3)
      
 
     select case(order)
@@ -57,7 +60,7 @@ contains
       write(*,*) "Error: Unsupported derivative order:", order    
     end select
 
-  end function calc_d1
+  end subroutine calc_d1
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -71,20 +74,20 @@ contains
 !      output:
 !         d2_array(3,3): derivative of array 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-function calc_d2(array, i, j, k, order, dx, dy, dz, k_sum) result(d2_array)
+subroutine calc_d2(array, i, j, k, order, dx, dy, dz, k_sum, d2_array)
 implicit none
-    real(real64), dimension(:,:,:), intent(in) :: array
-    integer, intent(in) :: i, j, k, order
+    CCTK_REAL, dimension(:,:,:), intent(in) :: array
+    CCTK_INT, intent(in) :: i, j, k, order
     logical, intent(in) :: k_sum
-    real(real64), intent(in) :: dx, dy, dz
-    real(real64) :: d2_array(3,3)
-    integer :: nx, ny, nz
-    real(real64) :: dx2, dy2, dz2, dxdy, dxdz, dydz
-    real(real64) :: temp1, temp2, temp3, temp4
-    real(real64) :: summ, c, y, t ! Variables for Kahan summation
+    CCTK_REAL, intent(in) :: dx, dy, dz
+    CCTK_REAL, intent(inout) :: d2_array(3,3)
+    CCTK_INT :: nx, ny, nz
+    CCTK_REAL :: dx2, dy2, dz2, dxdy, dxdz, dydz
+    CCTK_REAL :: temp1, temp2, temp3, temp4
+    CCTK_REAL :: summ, c, y, t ! Variables for Kahan summation
 
 
-    d2_array = 0.0_real64
+    d2_array = 0.0d0
     dx2 = dx * dx
     dy2 = dy * dy
     dz2 = dz * dz
@@ -108,138 +111,138 @@ implicit none
       d2_array(3,3) = (temp1 - temp2) / dz
 
       ! Mixed derivatives (2nd order) 
-      temp1 = (array(i+1,j+1,k) - array(i+1,j-1,k)) / (2.0_real64*dy)
-      temp2 = (array(i-1,j+1,k) - array(i-1,j-1,k)) / (2.0_real64*dy)
-      d2_array(1,2) = (temp1 - temp2) / (2.0_real64*dx)
+      temp1 = (array(i+1,j+1,k) - array(i+1,j-1,k)) / (2.0d0*dy)
+      temp2 = (array(i-1,j+1,k) - array(i-1,j-1,k)) / (2.0d0*dy)
+      d2_array(1,2) = (temp1 - temp2) / (2.0d0*dx)
 
-      temp1 = (array(i+1,j,k+1) - array(i+1,j,k-1)) / (2.0_real64*dz)
-      temp2 = (array(i-1,j,k+1) - array(i-1,j,k-1)) / (2.0_real64*dz)
-      d2_array(1,3) = (temp1 - temp2) / (2.0_real64*dx)
+      temp1 = (array(i+1,j,k+1) - array(i+1,j,k-1)) / (2.0d0*dz)
+      temp2 = (array(i-1,j,k+1) - array(i-1,j,k-1)) / (2.0d0*dz)
+      d2_array(1,3) = (temp1 - temp2) / (2.0d0*dx)
 
-      temp1 = (array(i,j+1,k+1) - array(i,j+1,k-1)) / (2.0_real64*dz)
-      temp2 = (array(i,j-1,k+1) - array(i,j-1,k-1)) / (2.0_real64*dz)
-      d2_array(2,3) = (temp1 - temp2) / (2.0_real64*dy)
+      temp1 = (array(i,j+1,k+1) - array(i,j+1,k-1)) / (2.0d0*dz)
+      temp2 = (array(i,j-1,k+1) - array(i,j-1,k-1)) / (2.0d0*dz)
+      d2_array(2,3) = (temp1 - temp2) / (2.0d0*dy)
 
     case(4)
             if (k_sum) then  ! with summation compensation
 
-                summ = 0.0_real64
-                c = 0.0_real64
+                summ = 0.0d0
+                c = 0.0d0
                 call kahan_sum(summ, c, -array(i+2,j,k))
-                call kahan_sum(summ, c, 16.0_real64*array(i+1,j,k))
-                call kahan_sum(summ, c, -30.0_real64*array(i,j,k))
-                call kahan_sum(summ, c, 16.0_real64*array(i-1,j,k))
+                call kahan_sum(summ, c, 16.0d0*array(i+1,j,k))
+                call kahan_sum(summ, c, -30.0d0*array(i,j,k))
+                call kahan_sum(summ, c, 16.0d0*array(i-1,j,k))
                 call kahan_sum(summ, c, -array(i-2,j,k))
-                d2_array(1,1) = summ / (12.0_real64*dx2)
+                d2_array(1,1) = summ / (12.0d0*dx2)
 
-                summ = 0.0_real64
-                c = 0.0_real64
+                summ = 0.0d0
+                c = 0.0d0
                 call kahan_sum(summ, c, -array(i,j+2,k))
-                call kahan_sum(summ, c, 16.0_real64*array(i,j+1,k))
-                call kahan_sum(summ, c, -30.0_real64*array(i,j,k))
-                call kahan_sum(summ, c, 16.0_real64*array(i,j-1,k))
+                call kahan_sum(summ, c, 16.0d0*array(i,j+1,k))
+                call kahan_sum(summ, c, -30.0d0*array(i,j,k))
+                call kahan_sum(summ, c, 16.0d0*array(i,j-1,k))
                 call kahan_sum(summ, c, -array(i,j-2,k))
-                d2_array(2,2) = summ / (12.0_real64*dy2)
+                d2_array(2,2) = summ / (12.0d0*dy2)
 
-                summ = 0.0_real64
-                c = 0.0_real64
+                summ = 0.0d0
+                c = 0.0d0
                 call kahan_sum(summ, c, -array(i,j,k+2))
-                call kahan_sum(summ, c, 16.0_real64*array(i,j,k+1))
-                call kahan_sum(summ, c, -30.0_real64*array(i,j,k))
-                call kahan_sum(summ, c, 16.0_real64*array(i,j,k-1))
+                call kahan_sum(summ, c, 16.0d0*array(i,j,k+1))
+                call kahan_sum(summ, c, -30.0d0*array(i,j,k))
+                call kahan_sum(summ, c, 16.0d0*array(i,j,k-1))
                 call kahan_sum(summ, c, -array(i,j,k-2))
-                d2_array(3,3) = summ / (12.0_real64*dz2)
+                d2_array(3,3) = summ / (12.0d0*dz2)
 
                         ! Mixed derivatives with Kahan summation compensation
-                summ = 0.0_real64
-                c = 0.0_real64
+                summ = 0.0d0
+                c = 0.0d0
                 call kahan_sum(summ, c, array(i+2,j+2,k))
-                call kahan_sum(summ, c, -8.0_real64*array(i+2,j+1,k))
-                call kahan_sum(summ, c, 8.0_real64*array(i+2,j-1,k))
+                call kahan_sum(summ, c, -8.0d0*array(i+2,j+1,k))
+                call kahan_sum(summ, c, 8.0d0*array(i+2,j-1,k))
                 call kahan_sum(summ, c, -array(i+2,j-2,k))
-                call kahan_sum(summ, c, -8.0_real64*array(i+1,j+2,k))
-                call kahan_sum(summ, c, 64.0_real64*array(i+1,j+1,k))
-                call kahan_sum(summ, c, -64.0_real64*array(i+1,j-1,k))
-                call kahan_sum(summ, c, 8.0_real64*array(i+1,j-2,k))
-                call kahan_sum(summ, c, 8.0_real64*array(i-1,j+2,k))
-                call kahan_sum(summ, c, -64.0_real64*array(i-1,j+1,k))
-                call kahan_sum(summ, c, 64.0_real64*array(i-1,j-1,k))
-                call kahan_sum(summ, c, -8.0_real64*array(i-1,j-2,k))
+                call kahan_sum(summ, c, -8.0d0*array(i+1,j+2,k))
+                call kahan_sum(summ, c, 64.0d0*array(i+1,j+1,k))
+                call kahan_sum(summ, c, -64.0d0*array(i+1,j-1,k))
+                call kahan_sum(summ, c, 8.0d0*array(i+1,j-2,k))
+                call kahan_sum(summ, c, 8.0d0*array(i-1,j+2,k))
+                call kahan_sum(summ, c, -64.0d0*array(i-1,j+1,k))
+                call kahan_sum(summ, c, 64.0d0*array(i-1,j-1,k))
+                call kahan_sum(summ, c, -8.0d0*array(i-1,j-2,k))
                 call kahan_sum(summ, c, -array(i-2,j+2,k))
-                call kahan_sum(summ, c, 8.0_real64*array(i-2,j+1,k))
-                call kahan_sum(summ, c, -8.0_real64*array(i-2,j-1,k))
+                call kahan_sum(summ, c, 8.0d0*array(i-2,j+1,k))
+                call kahan_sum(summ, c, -8.0d0*array(i-2,j-1,k))
                 call kahan_sum(summ, c, array(i-2,j-2,k))
-                d2_array(1,2) = summ / (144.0_real64*dxdy)
+                d2_array(1,2) = summ / (144.0d0*dxdy)
 
-                summ = 0.0_real64
-                c = 0.0_real64
+                summ = 0.0d0
+                c = 0.0d0
                 call kahan_sum(summ, c, array(i+2,j,k+2))
-                call kahan_sum(summ, c, -8.0_real64*array(i+2,j,k+1))
-                call kahan_sum(summ, c, 8.0_real64*array(i+2,j,k-1))
+                call kahan_sum(summ, c, -8.0d0*array(i+2,j,k+1))
+                call kahan_sum(summ, c, 8.0d0*array(i+2,j,k-1))
                 call kahan_sum(summ, c, -array(i+2,j,k-2))
-                call kahan_sum(summ, c, -8.0_real64*array(i+1,j,k+2))
-                call kahan_sum(summ, c, 64.0_real64*array(i+1,j,k+1))
-                call kahan_sum(summ, c, -64.0_real64*array(i+1,j,k-1))
-                call kahan_sum(summ, c, 8.0_real64*array(i+1,j,k-2))
-                call kahan_sum(summ, c, 8.0_real64*array(i-1,j,k+2))
-                call kahan_sum(summ, c, -64.0_real64*array(i-1,j,k+1))
-                call kahan_sum(summ, c, 64.0_real64*array(i-1,j,k-1))
-                call kahan_sum(summ, c, -8.0_real64*array(i-1,j,k-2))
+                call kahan_sum(summ, c, -8.0d0*array(i+1,j,k+2))
+                call kahan_sum(summ, c, 64.0d0*array(i+1,j,k+1))
+                call kahan_sum(summ, c, -64.0d0*array(i+1,j,k-1))
+                call kahan_sum(summ, c, 8.0d0*array(i+1,j,k-2))
+                call kahan_sum(summ, c, 8.0d0*array(i-1,j,k+2))
+                call kahan_sum(summ, c, -64.0d0*array(i-1,j,k+1))
+                call kahan_sum(summ, c, 64.0d0*array(i-1,j,k-1))
+                call kahan_sum(summ, c, -8.0d0*array(i-1,j,k-2))
                 call kahan_sum(summ, c, -array(i-2,j,k+2))
-                call kahan_sum(summ, c, 8.0_real64*array(i-2,j,k+1))
-                call kahan_sum(summ, c, -8.0_real64*array(i-2,j,k-1))
+                call kahan_sum(summ, c, 8.0d0*array(i-2,j,k+1))
+                call kahan_sum(summ, c, -8.0d0*array(i-2,j,k-1))
                 call kahan_sum(summ, c, array(i-2,j,k-2))
-                d2_array(1,3) = summ / (144.0_real64*dxdz)
+                d2_array(1,3) = summ / (144.0d0*dxdz)
 
-                summ = 0.0_real64
-                c = 0.0_real64
+                summ = 0.0d0
+                c = 0.0d0
                 call kahan_sum(summ, c, array(i,j+2,k+2))
-                call kahan_sum(summ, c, -8.0_real64*array(i,j+2,k+1))
-                call kahan_sum(summ, c, 8.0_real64*array(i,j+2,k-1))
+                call kahan_sum(summ, c, -8.0d0*array(i,j+2,k+1))
+                call kahan_sum(summ, c, 8.0d0*array(i,j+2,k-1))
                 call kahan_sum(summ, c, -array(i,j+2,k-2))
-                call kahan_sum(summ, c, -8.0_real64*array(i,j+1,k+2))
-                call kahan_sum(summ, c, 64.0_real64*array(i,j+1,k+1))
-                call kahan_sum(summ, c, -64.0_real64*array(i,j+1,k-1))
-                call kahan_sum(summ, c, 8.0_real64*array(i,j+1,k-2))
-                call kahan_sum(summ, c, 8.0_real64*array(i,j-1,k+2))
-                call kahan_sum(summ, c, -64.0_real64*array(i,j-1,k+1))
-                call kahan_sum(summ, c, 64.0_real64*array(i,j-1,k-1))
-                call kahan_sum(summ, c, -8.0_real64*array(i,j-1,k-2))
+                call kahan_sum(summ, c, -8.0d0*array(i,j+1,k+2))
+                call kahan_sum(summ, c, 64.0d0*array(i,j+1,k+1))
+                call kahan_sum(summ, c, -64.0d0*array(i,j+1,k-1))
+                call kahan_sum(summ, c, 8.0d0*array(i,j+1,k-2))
+                call kahan_sum(summ, c, 8.0d0*array(i,j-1,k+2))
+                call kahan_sum(summ, c, -64.0d0*array(i,j-1,k+1))
+                call kahan_sum(summ, c, 64.0d0*array(i,j-1,k-1))
+                call kahan_sum(summ, c, -8.0d0*array(i,j-1,k-2))
                 call kahan_sum(summ, c, -array(i,j-2,k+2))
-                call kahan_sum(summ, c, 8.0_real64*array(i,j-2,k+1))
-                call kahan_sum(summ, c, -8.0_real64*array(i,j-2,k-1))
+                call kahan_sum(summ, c, 8.0d0*array(i,j-2,k+1))
+                call kahan_sum(summ, c, -8.0d0*array(i,j-2,k-1))
                 call kahan_sum(summ, c, array(i,j-2,k-2))
-                d2_array(2,3) = summ / (144.0_real64*dydz)
+                d2_array(2,3) = summ / (144.0d0*dydz)
 
              else
                ! Fourth-order accurate second derivatives without summation compensation
-                temp1 = (-array(i+2,j,k) + 16.0_real64*array(i+1,j,k) - 30.0_real64*array(i,j,k) + 16.0_real64*array(i-1,j,k) - array(i-2,j,k))
-                d2_array(1,1) = temp1 / (12.0_real64*dx2)
+                temp1 = (-array(i+2,j,k) + 16.0d0*array(i+1,j,k) - 30.0d0*array(i,j,k) + 16.0d0*array(i-1,j,k) - array(i-2,j,k))
+                d2_array(1,1) = temp1 / (12.0d0*dx2)
              
-                temp1 = (-array(i,j+2,k) + 16.0_real64*array(i,j+1,k) - 30.0_real64*array(i,j,k) + 16.0_real64*array(i,j-1,k) - array(i,j-2,k))
-                d2_array(2,2) = temp1 / (12.0_real64*dy2)
+                temp1 = (-array(i,j+2,k) + 16.0d0*array(i,j+1,k) - 30.0d0*array(i,j,k) + 16.0d0*array(i,j-1,k) - array(i,j-2,k))
+                d2_array(2,2) = temp1 / (12.0d0*dy2)
                 
-                temp1 = (-array(i,j,k+2) + 16.0_real64*array(i,j,k+1) - 30.0_real64*array(i,j,k) + 16.0_real64*array(i,j,k-1) - array(i,j,k-2))
-                d2_array(3,3) = temp1 / (12.0_real64*dz2)
+                temp1 = (-array(i,j,k+2) + 16.0d0*array(i,j,k+1) - 30.0d0*array(i,j,k) + 16.0d0*array(i,j,k-1) - array(i,j,k-2))
+                d2_array(3,3) = temp1 / (12.0d0*dz2)
                 
                    ! Mixed derivatives (4th order accurate)
-                temp1 = array(i+2,j+2,k) - 8.0_real64*array(i+2,j+1,k) + 8.0_real64*array(i+2,j-1,k) - array(i+2,j-2,k)
-                temp2 = -8.0_real64*array(i+1,j+2,k) + 64.0_real64*array(i+1,j+1,k) - 64.0_real64*array(i+1,j-1,k) + 8.0_real64*array(i+1,j-2,k)
-                temp3 = 8.0_real64*array(i-1,j+2,k) - 64.0_real64*array(i-1,j+1,k) + 64.0_real64*array(i-1,j-1,k) - 8.0_real64*array(i-1,j-2,k)
-                temp4 = -array(i-2,j+2,k) + 8.0_real64*array(i-2,j+1,k) - 8.0_real64*array(i-2,j-1,k) + array(i-2,j-2,k)
-                d2_array(1,2) = (temp1 + temp2 + temp3 + temp4) / (144.0_real64*dxdy)
+                temp1 = array(i+2,j+2,k) - 8.0d0*array(i+2,j+1,k) + 8.0d0*array(i+2,j-1,k) - array(i+2,j-2,k)
+                temp2 = -8.0d0*array(i+1,j+2,k) + 64.0d0*array(i+1,j+1,k) - 64.0d0*array(i+1,j-1,k) + 8.0d0*array(i+1,j-2,k)
+                temp3 = 8.0d0*array(i-1,j+2,k) - 64.0d0*array(i-1,j+1,k) + 64.0d0*array(i-1,j-1,k) - 8.0d0*array(i-1,j-2,k)
+                temp4 = -array(i-2,j+2,k) + 8.0d0*array(i-2,j+1,k) - 8.0d0*array(i-2,j-1,k) + array(i-2,j-2,k)
+                d2_array(1,2) = (temp1 + temp2 + temp3 + temp4) / (144.0d0*dxdy)
                 
-                temp1 = array(i+2,j,k+2) - 8.0_real64*array(i+2,j,k+1) + 8.0_real64*array(i+2,j,k-1) - array(i+2,j,k-2)
-                temp2 = -8.0_real64*array(i+1,j,k+2) + 64.0_real64*array(i+1,j,k+1) - 64.0_real64*array(i+1,j,k-1) + 8.0_real64*array(i+1,j,k-2)
-                temp3 = 8.0_real64*array(i-1,j,k+2) - 64.0_real64*array(i-1,j,k+1) + 64.0_real64*array(i-1,j,k-1) - 8.0_real64*array(i-1,j,k-2)
-                temp4 = -array(i-2,j,k+2) + 8.0_real64*array(i-2,j,k+1) - 8.0_real64*array(i-2,j,k-1) + array(i-2,j,k-2)
-                d2_array(1,3) = (temp1 + temp2 + temp3 + temp4) / (144.0_real64*dxdz)
+                temp1 = array(i+2,j,k+2) - 8.0d0*array(i+2,j,k+1) + 8.0d0*array(i+2,j,k-1) - array(i+2,j,k-2)
+                temp2 = -8.0d0*array(i+1,j,k+2) + 64.0d0*array(i+1,j,k+1) - 64.0d0*array(i+1,j,k-1) + 8.0d0*array(i+1,j,k-2)
+                temp3 = 8.0d0*array(i-1,j,k+2) - 64.0d0*array(i-1,j,k+1) + 64.0d0*array(i-1,j,k-1) - 8.0d0*array(i-1,j,k-2)
+                temp4 = -array(i-2,j,k+2) + 8.0d0*array(i-2,j,k+1) - 8.0d0*array(i-2,j,k-1) + array(i-2,j,k-2)
+                d2_array(1,3) = (temp1 + temp2 + temp3 + temp4) / (144.0d0*dxdz)
                 
-                temp1 = array(i,j+2,k+2) - 8.0_real64*array(i,j+2,k+1) + 8.0_real64*array(i,j+2,k-1) - array(i,j+2,k-2)
-                temp2 = -8.0_real64*array(i,j+1,k+2) + 64.0_real64*array(i,j+1,k+1) - 64.0_real64*array(i,j+1,k-1) + 8.0_real64*array(i,j+1,k-2)
-                temp3 = 8.0_real64*array(i,j-1,k+2) - 64.0_real64*array(i,j-1,k+1) + 64.0_real64*array(i,j-1,k-1) - 8.0_real64*array(i,j-1,k-2)
-                temp4 = -array(i,j-2,k+2) + 8.0_real64*array(i,j-2,k+1) - 8.0_real64*array(i,j-2,k-1) + array(i,j-2,k-2)
-                d2_array(2,3) = (temp1 + temp2 + temp3 + temp4) / (144.0_real64*dydz)
+                temp1 = array(i,j+2,k+2) - 8.0d0*array(i,j+2,k+1) + 8.0d0*array(i,j+2,k-1) - array(i,j+2,k-2)
+                temp2 = -8.0d0*array(i,j+1,k+2) + 64.0d0*array(i,j+1,k+1) - 64.0d0*array(i,j+1,k-1) + 8.0d0*array(i,j+1,k-2)
+                temp3 = 8.0d0*array(i,j-1,k+2) - 64.0d0*array(i,j-1,k+1) + 64.0d0*array(i,j-1,k-1) - 8.0d0*array(i,j-1,k-2)
+                temp4 = -array(i,j-2,k+2) + 8.0d0*array(i,j-2,k+1) - 8.0d0*array(i,j-2,k-1) + array(i,j-2,k-2)
+                d2_array(2,3) = (temp1 + temp2 + temp3 + temp4) / (144.0d0*dydz)
 
          end if 
  
@@ -252,7 +255,7 @@ implicit none
     d2_array(3,1) = d2_array(1,3)
     d2_array(3,2) = d2_array(2,3)
     
-  end function calc_d2
+  end subroutine calc_d2
 
 
 
@@ -267,9 +270,9 @@ implicit none
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
   subroutine kahan_sum(sum, c, input)
-    real(real64), intent(inout) :: sum, c
-    real(real64), intent(in) :: input
-    real(real64) :: y, t
+    CCTK_REAL, intent(inout) :: sum, c
+    CCTK_REAL, intent(in) :: input
+    CCTK_REAL :: y, t
     y = input - c
     t = sum + y
     c = (t - sum) - y
@@ -290,22 +293,23 @@ implicit none
 !         ad1_f: advective derivative of grid function
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  function calc_ad1(array,beta, i,j,k, dx,dy,dz, di,dj,dk) result(ad1_f)
-    real(real64), dimension(:,:,:), intent(in) :: array
-    real(real64), dimension(3), intent(in) :: beta
-    integer, intent(in) :: i, j, k, di, dj, dk
-    real(real64), intent(in) :: dx, dy, dz
-    real(real64) ::  ad1_f
-    real(real64), dimension(3) :: d1_f
+  subroutine calc_ad1(array,beta, i,j,k, dx,dy,dz, di,dj,dk,ad1_f)
+    CCTK_REAL, dimension(:,:,:), intent(in) :: array
+    CCTK_REAL, intent(in) :: beta(3)
+    CCTK_INT, intent(in) :: i, j, k, di, dj, dk
+    CCTK_REAL, intent(in) :: dx, dy, dz
+    CCTK_REAL ::  d1_f(3)
+    CCTK_REAL, intent(inout) :: ad1_f(3)
+           ad1_f = 0.d0        
 
-           d1_f(1) = di * ( -3.0_real64*array(i-di,j,k) - 10.0_real64*array(i,j,k) + 18.0_real64*array(i+di,j,k)   &
-                - 6.0_real64*array(i+2*di,j,k) + array(i+3*di,j,k)) / (12.0_real64*dx)
-           d1_f(2) = dj * ( -3.0_real64*array(i,j-dj,k) - 10.0_real64*array(i,j,k) + 18.0_real64*array(i,j+dj,k)   &
-                - 6.0_real64*array(i,j+2*dj,k) + array(i,j+3*dj,k)) / (12.0_real64*dy)
-           d1_f(3) = dk * ( -3*array(i,j,k-dk) - 10.0_real64*array(i,j,k) + 18.0_real64*array(i,j,k+dk)   &
-                - 6.0_real64*array(i,j,k+2*dk) + array(i,j,k+3*dk)) / (12.0_real64*dz)
+           d1_f(1) = di * ( -3.0d0*array(i-di,j,k) - 10.0d0*array(i,j,k) + 18.0d0*array(i+di,j,k)   &
+                - 6.0d0*array(i+2*di,j,k) + array(i+3*di,j,k)) / (12.0d0*dx)
+           d1_f(2) = dj * ( -3.0d0*array(i,j-dj,k) - 10.0d0*array(i,j,k) + 18.0d0*array(i,j+dj,k)   &
+                - 6.0d0*array(i,j+2*dj,k) + array(i,j+3*dj,k)) / (12.0d0*dy)
+           d1_f(3) = dk * ( -3*array(i,j,k-dk) - 10.0d0*array(i,j,k) + 18.0d0*array(i,j,k+dk)   &
+                - 6.0d0*array(i,j,k+2*dk) + array(i,j,k+3*dk)) / (12.0d0*dz)
            ad1_f = beta(1)*d1_f(1) + beta(2)*d1_f(2) + beta(3)*d1_f(3)
-  end function calc_ad1
+  end subroutine calc_ad1
 
-end module finite_difference_mod
+!end module finite_difference_mod
 

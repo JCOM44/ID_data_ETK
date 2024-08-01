@@ -14,7 +14,7 @@
 
 subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
-  use finite_difference_mod      
+!  use finite_difference_mod      
   implicit none
   DECLARE_CCTK_ARGUMENTS
   DECLARE_CCTK_PARAMETERS
@@ -316,79 +316,79 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
       !------------ Centered 1st derivatives -----      
 
       ! d1_ww(3)           
-      d1_ww = calc_d1(conf_fac, i,j,k, derivs_order, dx,dy,dz)
+      call calc_d1(conf_fac, i,j,k, derivs_order, dx,dy,dz,d1_ww)
 
       if (evolve_scalar) then 
     !   d1_phi1(3)
-        d1_lphi = calc_d1(phi1, i,j,k, derivs_order, dx,dy,dz)     
+       call  calc_d1(phi1, i,j,k, derivs_order, dx,dy,dz,d1_lphi)     
 
       ! d1_Kphi1(3)
-        d1_lKphi = calc_d1(Kphi1, i,j,k, derivs_order, dx,dy,dz)     
+        call calc_d1(Kphi1, i,j,k, derivs_order, dx,dy,dz, d1_lKphi)     
       end if 
       
       ! d1_hh(3,3,3)
 
-      d1_hh11 = calc_d1(hxx, i,j,k, derivs_order, dx,dy,dz)     
-      d1_hh12 = calc_d1(hxy, i,j,k, derivs_order, dx,dy,dz)     
-      d1_hh13 = calc_d1(hxz, i,j,k, derivs_order, dx,dy,dz)     
-      d1_hh22 = calc_d1(hyy, i,j,k, derivs_order, dx,dy,dz)     
-      d1_hh23 = calc_d1(hyz, i,j,k, derivs_order, dx,dy,dz)     
-      d1_hh33 = calc_d1(hzz, i,j,k, derivs_order, dx,dy,dz)     
+      call calc_d1(hxx, i,j,k, derivs_order, dx,dy,dz,d1_hh11)     
+      call calc_d1(hxy, i,j,k, derivs_order, dx,dy,dz, d1_hh12)     
+      call calc_d1(hxz, i,j,k, derivs_order, dx,dy,dz, d1_hh13)     
+      call calc_d1(hyy, i,j,k, derivs_order, dx,dy,dz, d1_hh22)     
+      call calc_d1(hyz, i,j,k, derivs_order, dx,dy,dz, d1_hh23)     
+      call calc_d1(hzz, i,j,k, derivs_order, dx,dy,dz, d1_hh33)     
       
       ! d1_trk(3)
-      d1_trk = calc_d1(tracek, i,j,k, derivs_order, dx,dy,dz)     
+      call calc_d1(tracek, i,j,k, derivs_order, dx,dy,dz, d1_trk)     
       
 
       ! d1_aa(3,3,3)
 
-      d1_aa11 = calc_d1(axx, i,j,k, derivs_order, dx,dy,dz)     
-      d1_aa12 = calc_d1(axy, i,j,k, derivs_order, dx,dy,dz)     
-      d1_aa13 = calc_d1(axz, i,j,k, derivs_order, dx,dy,dz)     
-      d1_aa22 = calc_d1(ayy, i,j,k, derivs_order, dx,dy,dz)     
-      d1_aa23 = calc_d1(ayz, i,j,k, derivs_order, dx,dy,dz)     
-      d1_aa33 = calc_d1(azz, i,j,k, derivs_order, dx,dy,dz)     
+      call calc_d1(axx, i,j,k, derivs_order, dx,dy,dz, d1_aa11)     
+      call calc_d1(axy, i,j,k, derivs_order, dx,dy,dz, d1_aa12)     
+      call calc_d1(axz, i,j,k, derivs_order, dx,dy,dz, d1_aa13)     
+      call calc_d1(ayy, i,j,k, derivs_order, dx,dy,dz, d1_aa22)     
+      call calc_d1(ayz, i,j,k, derivs_order, dx,dy,dz, d1_aa23)     
+      call calc_d1(azz, i,j,k, derivs_order, dx,dy,dz, d1_aa33)     
 
       ! d1_gammat(3,3)
-      d1_gammat1 = calc_d1(gammatx, i,j,k, derivs_order, dx,dy,dz)     
-      d1_gammat2 = calc_d1(gammaty, i,j,k, derivs_order, dx,dy,dz)     
-      d1_gammat3 = calc_d1(gammatz, i,j,k, derivs_order, dx,dy,dz)     
+      call calc_d1(gammatx, i,j,k, derivs_order, dx,dy,dz, d1_gammat1)     
+      call calc_d1(gammaty, i,j,k, derivs_order, dx,dy,dz, d1_gammat2)     
+      call calc_d1(gammatz, i,j,k, derivs_order, dx,dy,dz, d1_gammat3)     
 
 
       ! d1_alph(3)
-      d1_alph = calc_d1(alp, i,j,k, derivs_order, dx,dy,dz)     
+      call calc_d1(alp, i,j,k, derivs_order, dx,dy,dz, d1_alph)     
 
       ! d1_beta(3,3)
-      d1_beta1 = calc_d1(betax, i,j,k, derivs_order, dx,dy,dz)     
-      d1_beta2 = calc_d1(betay, i,j,k, derivs_order, dx,dy,dz)     
-      d1_beta3 = calc_d1(betaz, i,j,k, derivs_order, dx,dy,dz)     
+      call calc_d1(betax, i,j,k, derivs_order, dx,dy,dz, d1_beta1)     
+      call calc_d1(betay, i,j,k, derivs_order, dx,dy,dz, d1_beta2)     
+      call calc_d1(betaz, i,j,k, derivs_order, dx,dy,dz, d1_beta3)     
 
 
 
       !------------- Centered 2nd derivatives -----------
 
       ! d2_ww(3,3)
-      d2_ww = calc_d2(conf_fac, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
+      call calc_d2(conf_fac, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_ww)
 
       if (evolve_scalar) then
       !d2_phi(3,3)
-      d2_lphi = calc_d2(phi1, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
+      call calc_d2(phi1, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_lphi)
       end if
       
       ! d2_hh(3,3,3,3)
-      d2_hh11 = calc_d2(hxx, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
-      d2_hh12 = calc_d2(hxy, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
-      d2_hh13 = calc_d2(hxz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
-      d2_hh22 = calc_d2(hyy, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
-      d2_hh23 = calc_d2(hyz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
-      d2_hh33 = calc_d2(hzz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)
+      call calc_d2(hxx, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh11)
+      call calc_d2(hxy, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh12)
+      call calc_d2(hxz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh13)
+      call calc_d2(hyy, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh22)
+      call calc_d2(hyz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh23)
+      call calc_d2(hzz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh33)
 
       ! d2_alph(3,3)
-      d2_alph = calc_d2(alp, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)      
+      call calc_d2(alp, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_alph)      
 
       ! d2_beta(3,3,3)
-      d2_beta1 = calc_d2(betax, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)      
-      d2_beta2 = calc_d2(betay, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)      
-      d2_beta3 = calc_d2(betaz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0)      
+      call calc_d2(betax, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_beta1)      
+      call calc_d2(betay, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_beta2)      
+      call calc_d2(betaz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_beta3)      
       
 
       !--------------------------------------------------
@@ -402,41 +402,41 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
         dk = int( sign( one, beta_l(3) ) )        
 
         ! ad1_ww
-        ad1_ww  = calc_ad1(conf_fac,beta_l,i,j,k,dx,dy,dz,di,dj,dk) 
+        call calc_ad1(conf_fac,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_ww) 
 
 
         if (evolve_scalar) then
         ! ad1_phi        
-        ad1_lphi = calc_ad1(phi1,beta_l,i,j,k,dx,dy,dz,di,dj,dk)          
+        call calc_ad1(phi1,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_lphi)          
       
         ! ad1_Kphi        
-        ad1_lKphi = calc_ad1(Kphi1,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
+        call calc_ad1(Kphi1,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_lKphi)                
         end if  
 
         ! ad1_hh(3,3)
 
-        ad1_hh(1,1) =  calc_ad1(hxx,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
-        ad1_hh(1,2) =  calc_ad1(hxy,beta_l,i,j,k,dx,dy,dz,di,dj,dk)               
-        ad1_hh(1,3) =  calc_ad1(hxz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)        
-        ad1_hh(2,2) =  calc_ad1(hyy,beta_l,i,j,k,dx,dy,dz,di,dj,dk)        
-        ad1_hh(2,3) =  calc_ad1(hyz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)        
-        ad1_hh(3,3) =  calc_ad1(hzz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)       
+        call  calc_ad1(hxx,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,1))                
+        call  calc_ad1(hxy,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,2))               
+        call  calc_ad1(hxz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,3))        
+        call  calc_ad1(hyy,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(2,2))        
+        call  calc_ad1(hyz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(2,3))        
+        call  calc_ad1(hzz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(3,3))       
 
         ad1_hh(2,1) = ad1_hh(1,2)
         ad1_hh(3,1) = ad1_hh(1,3)
         ad1_hh(3,2) = ad1_hh(2,3)        
 
         ! ad1_trk        
-        ad1_trk = calc_ad1(tracek,beta_l,i,j,k,dx,dy,dz,di,dj,dk)  
+        call calc_ad1(tracek,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_trk)  
         
 
         ! ad1_aa(3,3)
-        ad1_aa(1,1) =  calc_ad1(axx,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
-        ad1_aa(1,2) =  calc_ad1(axy,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
-        ad1_aa(1,3) =  calc_ad1(axz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
-        ad1_aa(2,2) =  calc_ad1(ayy,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
-        ad1_aa(2,3) =  calc_ad1(ayz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                
-        ad1_aa(3,3) =  calc_ad1(azz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                       
+        call calc_ad1(axx,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(1,1))                
+        call calc_ad1(axy,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(1,2))                
+        call calc_ad1(axz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(1,3))                
+        call calc_ad1(ayy,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(2,2))                
+        call calc_ad1(ayz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(2,3))                
+        call calc_ad1(azz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(3,3))                       
 
         ad1_aa(2,1) = ad1_aa(1,2)
         ad1_aa(3,1) = ad1_aa(1,3)
@@ -444,21 +444,22 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
         
 
         ! ad1_gammat(3)
-        ad1_gammat(1) = calc_ad1(gammatx,beta_l,i,j,k,dx,dy,dz,di,dj,dk)  
-        ad1_gammat(2) = calc_ad1(gammaty,beta_l,i,j,k,dx,dy,dz,di,dj,dk)  
-        ad1_gammat(3) = calc_ad1(gammatz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)                  
+        call calc_ad1(gammatx,beta_l,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(1))  
+        call calc_ad1(gammaty,beta_l,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(3))  
+        call calc_ad1(gammatz,beta_l,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(3))  
+
 
         !ad1_alph
         if (evolve_alp) then
-        ad1_alph = calc_ad1(alp,beta_l,i,j,k,dx,dy,dz,di,dj,dk)          
+        call calc_ad1(alp,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_alph)          
         end if
         
 
         ! ad1_beta(3)
         if (evolve_beta) then
-        ad1_beta(1) = calc_ad1(betax,beta_l,i,j,k,dx,dy,dz,di,dj,dk)  
-        ad1_beta(2) = calc_ad1(betay,beta_l,i,j,k,dx,dy,dz,di,dj,dk)  
-        ad1_beta(3) = calc_ad1(betaz,beta_l,i,j,k,dx,dy,dz,di,dj,dk)          
+        call calc_ad1(betax,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(1))  
+        call calc_ad1(betay,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(2))  
+        call calc_ad1(betaz,beta_l,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(3))          
         end if 
 
       else
