@@ -568,6 +568,86 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
     end do
     !-------------------------------------------
 
+    !-------------------------------------------
+    !------------ Scalar field terms ----------
+    
+    if (evolve_scalar) then      ! Begin evolveScalar
+
+            !---- Calculate traces                                     
+        tr_cd2_phi_new = 0         
+        tr_dphi_dphi = 0
+        
+        do a =1,3
+           do b = 1,3                      
+              tr_cd2_phi_new   = tr_cd2_phi_new   + hu(a,b) * (cd2_lphi(a,b)+cW_dphi(a,b) )*ww*ww              
+              tr_dphi_dphi = tr_dphi_dphi + hu(a,b) * d1_lphi(a)*d1_lphi(b)
+           end do           
+        end do
+        tr_cd2_phi_new = tr_cd2_phi_new * ww*ww         
+        tr_dphi_dphi = tr_dphi_dphi*ww*ww
+        
+        !!! Choose theory
+
+       if (  CCTK_EQUALS(theory,"BD") ) then                       !---define BD
+            Bphi        = exp(lphi)
+            BKphi       = Bphi * lKphi
+
+            ham_phi = 0.0d0 
+            mom_phi(1) = 0.d0
+            mom_phi(2) = 0.d0
+            mom_phi(3) = 0.d0
+
+            ham_phi =  0.5d0 * (1.0d0 /(k0BD*k0BD) - 3.0d0) * lKphi*lKphi
+            ham_phi = ham_phi +  0.5d0 * ( 1.0d0/(k0BD*k0BD)+1.0d0) *tr_dphi_dphi
+            ham_phi = ham_phi + 2.0d0*(-trk * lKphi + tr_cd2_phi_new)             
+            
+
+            do a=1,3
+              do b=1,3
+                do c=1,3                   
+                   mom_phi(a) = mom_phi(a) +  hu(b,c)*aa(a,b)*d1_lphi(c)
+                end do
+              end do
+            end do
+            ! write like this to avoid error accumulation for multiple substractions
+            mom_phi = ( 0.5d0 * (1.0d0/(k0BD*k0BD) -1.0d0)*lKphi -trk/3.0d0 )*d1_lphi + d1_lKphi - mom_phi
+
+       end if                                                   ! -- end  Define BD
+       
+       if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFdecoupling") .OR. CCTK_EQUALS(theory,"onlySF")) then                      !--- Define DEF
+            ham_phi = 0.0d0 
+            mom_phi(1) = 0.d0
+            mom_phi(2) = 0.d0
+            mom_phi(3) = 0.d0
+             Bphi        = exp(lphi2/2.0d0)
+             BKphi       = Bphi*lphi*lKphi
+
+            ham_phi =  (2.0d0 /B_DEF - 1.5d0*lphi2) * lKphi*lKphi
+            ham_phi = ham_phi +  0.5d0 * (1.0d0 + 2.0d0/B_DEF - lphi2/2.0d0) *tr_dphi_dphi
+            ham_phi = ham_phi + 2.0d0*lphi*(-trk * lKphi + tr_cd2_phi_new)             
+                       
+            do a=1,3
+              do b=1,3
+                do c=1,3                   
+                   mom_phi(a) = mom_phi(a) + lphi*hu(b,c)*aa(a,b)*d1_lphi(c)
+                end do
+              end do
+            end do
+            ! write like this to avoid error accumulation for multiple substractions
+            mom_phi =  ( (2.0d0/B_DEF +1.0d0-lphi2/2.0d0)*lKphi - trk/3.0d0 )*d1_lphi + lphi*d1_lKphi - mom_phi
+
+       end if                                                   ! -- end define DEF
+
+
+        
+        ham = ham - ham_phi
+        mom = mom - mom_phi
+
+else 
+        Bphi = 1.0d0       
+   
+end if  !! End evolveScalar
+
 
     !------------ Matter terms -----------------
     ! n_mu = (-alph, 0, 0, 0)
@@ -598,6 +678,10 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
        Tab(3,1) = Tab(1,3)
        Tab(3,2) = Tab(2,3)
 
+
+
+
+!! Matter sources
        srcE = Tab(4,4)
        do m = 1, 3
           srcE = srcE - 2 * beta(m) * Tab(m,4)
@@ -616,64 +700,14 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
        srcjdi = (srcjdi - Tab(1:3,4)) / alph
 
        !------------ Correct source terms ---------
-       ham = ham - pi16 * srcE
-       mom = mom - pi8  * srcjdi
+       ham = ham - pi16 * srcE/Bphi
+       mom = mom - pi8  * srcjdi/Bphi
 
     end if
 
-    
-    !-------------------------------------------
-    !------------ Scalar field terms ----------
-    
-    if (evolve_scalar) then      ! Begin evolveScalar
-
-            !---- Calculate traces                                     
-        tr_cd2_phi_new = 0         
-        tr_dphi_dphi = 0
-        
-        do a =1,3
-           do b = 1,3                      
-              tr_cd2_phi_new   = tr_cd2_phi_new   + hu(a,b) * (cd2_lphi(a,b)+cW_dphi(a,b) )*ww*ww              
-              tr_dphi_dphi = tr_dphi_dphi + hu(a,b) * d1_lphi(a)*d1_lphi(b)
-           end do           
-        end do
-        tr_cd2_phi_new = tr_cd2_phi_new * ww*ww         
-        tr_dphi_dphi = tr_dphi_dphi*ww*ww
-        
-        !!! Choose theory
-
-       if (  CCTK_EQUALS(theory,"BD") ) then                       !---define BD
-            Bphi        = exp(lphi)
-            BKphi       = Bphi * lKphi
- !           omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-3.0d0/2.0d0
- !           domega_Bphi = 0.0d0            
-            ham_phi = 0.0d0 
-            mom_phi(1) = 0.d0
-            mom_phi(2) = 0.d0
-            mom_phi(3) = 0.d0
-            ham_phi =  0.5d0 * (1.0d0 /(k0BD*k0BD) - 3.0d0) * lKphi*lKphi
-            ham_phi = ham_phi +  0.5d0 * ( 1.0d0/(k0BD*k0BD)+1.0d0) *tr_dphi_dphi
-            ham_phi = ham_phi + 2.0d0*(-trk * lKphi + tr_cd2_phi_new)             
-
-       end if                                                   ! -- end  Define BD
-       
-       if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFdecoupling") .OR. CCTK_EQUALS(theory,"onlySF")) then                      !--- Define DEF
-            ham_phi = 0.0d0 
-            mom_phi(1) = 0.d0
-            mom_phi(2) = 0.d0
-            mom_phi(3) = 0.d0
-             Bphi        = exp(lphi2/2.0d0)
-             BKphi       = Bphi*lphi*lKphi
-!             omega_Bphi  = 2.0d0/(B_DEF*lphi2)-3.0d0/2.0d0
-!             domega_Bphi = -4.0d0/(B_DEF*lphi2*lphi2*Bphi)               
-       end if                                                   ! -- end define DEF
 
 
-        
-        ham = ham - ham_phi
 
-
-end if  !! End evolveScalar
 
     !------------ Write to grid functions ------
     hc(i,j,k)  = ham
