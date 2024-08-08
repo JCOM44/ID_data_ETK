@@ -641,7 +641,7 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
 
         
         ham = ham - ham_phi
-        mom = mom - mom_phi
+!        mom = mom - mom_phi
 
 else 
         Bphi = 1.0d0       

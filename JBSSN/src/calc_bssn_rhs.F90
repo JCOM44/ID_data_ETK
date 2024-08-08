@@ -76,6 +76,8 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
   ! Misc variables
   CCTK_REAL                dx, dy, dz                   
+  CCTK_REAL                dx12, dy12, dz12, dxsq12, dysq12, dzsq12,         &
+                           dxdy144, dxdz144, dydz144
   CCTK_INT                 i, j, k, nx, ny, nz
   CCTK_INT                 di, dj, dk
   CCTK_REAL, parameter ::  one  = 1
@@ -169,6 +171,22 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   dy = CCTK_DELTA_SPACE(2)
   dz = CCTK_DELTA_SPACE(3)
   
+
+
+  dx12 = 12*CCTK_DELTA_SPACE(1)
+  dy12 = 12*CCTK_DELTA_SPACE(2)
+  dz12 = 12*CCTK_DELTA_SPACE(3)
+
+  dxsq12 = 12*CCTK_DELTA_SPACE(1)*CCTK_DELTA_SPACE(1)
+  dysq12 = 12*CCTK_DELTA_SPACE(2)*CCTK_DELTA_SPACE(2)
+  dzsq12 = 12*CCTK_DELTA_SPACE(3)*CCTK_DELTA_SPACE(3)
+
+  dxdy144 = 144*CCTK_DELTA_SPACE(1)*CCTK_DELTA_SPACE(2)
+  dxdz144 = 144*CCTK_DELTA_SPACE(1)*CCTK_DELTA_SPACE(3)
+  dydz144 = 144*CCTK_DELTA_SPACE(2)*CCTK_DELTA_SPACE(3)
+
+
+
 
   !$OMP PARALLEL DO COLLAPSE(3) &
   !$OMP PRIVATE( i, j, k, di, dj, dk, nx,ny,nz,  &
@@ -320,20 +338,19 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
       !------------ Centered 1st derivatives -----      
 
-      ! d1_ww(3)          
+! d1_ww(3)     
 
-      call calc_d1(conf_fac,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,d1_ww)
+      call calc_d1(conf_fac,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,d1_ww)            
 
       if (evolve_scalar) then 
-    !   d1_phi1(3)
+! d1_phi1(3)  
        call  calc_d1(phi1,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,d1_lphi)     
 
-      ! d1_Kphi1(3)
-        call calc_d1(Kphi1,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_lKphi)     
+! d1_Kphi1(3)  
+        call calc_d1(Kphi1,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_lKphi)             
       end if 
       
-      ! d1_hh(3,3,3)
-
+! d1_hh(3,3,3) 
       call calc_d1(hxx,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,d1_hh11)     
       call calc_d1(hxy,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_hh12)     
       call calc_d1(hxz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_hh13)     
@@ -341,46 +358,45 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
       call calc_d1(hyz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_hh23)     
       call calc_d1(hzz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_hh33)     
       
-      ! d1_trk(3)
-      call calc_d1(tracek,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_trk)     
-      
+! d1_trk(3)  
+      call calc_d1(tracek,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_trk)           
 
-      ! d1_aa(3,3,3)
+! d1_aa(3,3,3)  
 
       call calc_d1(axx,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa11)     
       call calc_d1(axy,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa12)     
       call calc_d1(axz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa13)     
       call calc_d1(ayy,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa22)     
       call calc_d1(ayz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa23)     
-      call calc_d1(azz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa33)     
+      call calc_d1(azz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_aa33)           
 
-      ! d1_gammat(3,3)
+! d1_gammat(3,3)  
       call calc_d1(gammatx,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_gammat1)     
       call calc_d1(gammaty,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_gammat2)     
-      call calc_d1(gammatz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_gammat3)     
+      call calc_d1(gammatz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_gammat3)           
 
+! d1_alph(3)
+      call calc_d1(alp,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_alph)           
 
-      ! d1_alph(3)
-      call calc_d1(alp,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_alph)     
-
-      ! d1_beta(3,3)
+! d1_beta(3,3) 
       call calc_d1(betax,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_beta1)     
       call calc_d1(betay,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_beta2)     
       call calc_d1(betaz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz, d1_beta3)     
 
+      !--------------------------------------------------
 
 
       !------------- Centered 2nd derivatives -----------
 
-      ! d2_ww(3,3)
+! d2_ww(3,3)
       call calc_d2(conf_fac,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_ww)
 
-      if (evolve_scalar) then
-      !d2_phi(3,3)
+!d2_phi(3,3)  
+      if (evolve_scalar) then              
       call calc_d2(phi1,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_lphi)
       end if
       
-      ! d2_hh(3,3,3,3)
+! d2_hh(3,3,3,3)
       call calc_d2(hxx,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh11)
       call calc_d2(hxy,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh12)
       call calc_d2(hxz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh13)
@@ -388,14 +404,14 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
       call calc_d2(hyz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh23)
       call calc_d2(hzz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0, d2_hh33)
 
-      ! d2_alph(3,3)
+! d2_alph(3,3)  
       call calc_d2(alp,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_alph)      
 
-      ! d2_beta(3,3,3)
+
+! d2_beta(3,3,3) 
       call calc_d2(betax,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_beta1)      
       call calc_d2(betay,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_beta2)      
       call calc_d2(betaz,nx,ny,nz, i,j,k, derivs_order, dx,dy,dz,k_sum/=0,d2_beta3)      
-      
 
       !--------------------------------------------------
 
@@ -407,22 +423,23 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
         dj = int( sign( one, beta_l(2) ) )
         dk = int( sign( one, beta_l(3) ) )        
 
-        ! ad1_ww
-        call calc_ad1(conf_fac,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_ww) 
-
+! ad1_ww 
+        call calc_ad1(conf_fac,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_ww)                 
 
         if (evolve_scalar) then
-        ! ad1_phi        
-        call calc_ad1(phi1,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_lphi)          
-      
-        ! ad1_Kphi        
-        call calc_ad1(Kphi1,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_lKphi)                
+! ad1_phi       
+        call calc_ad1(phi1,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_lphi)                                  
+
+! ad1_Kphi        
+!       NEW
+        call calc_ad1(Kphi1,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_lKphi)                        
         end if  
 
-        ! ad1_hh(3,3)
+! ad1_hh(3,3)
+!       NEW
 
         call  calc_ad1(hxx,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,1))                
-        call  calc_ad1(hxy,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,2))               
+        call  calc_ad1(hxy,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,2))                       
         call  calc_ad1(hxz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(1,3))        
         call  calc_ad1(hyy,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(2,2))        
         call  calc_ad1(hyz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_hh(2,3))        
@@ -430,42 +447,43 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
         ad1_hh(2,1) = ad1_hh(1,2)
         ad1_hh(3,1) = ad1_hh(1,3)
-        ad1_hh(3,2) = ad1_hh(2,3)        
+        ad1_hh(3,2) = ad1_hh(2,3)
 
-        ! ad1_trk        
+
+! ad1_trk        
+
         call calc_ad1(tracek,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_trk)  
-        
 
-        ! ad1_aa(3,3)
+
+! ad1_aa(3,3) 
         call calc_ad1(axx,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(1,1))                
         call calc_ad1(axy,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(1,2))                
         call calc_ad1(axz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(1,3))                
         call calc_ad1(ayy,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(2,2))                
         call calc_ad1(ayz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(2,3))                
         call calc_ad1(azz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_aa(3,3))                       
-
+!
         ad1_aa(2,1) = ad1_aa(1,2)
         ad1_aa(3,1) = ad1_aa(1,3)
         ad1_aa(3,2) = ad1_aa(2,3)
         
 
-        ! ad1_gammat(3)
+! ad1_gammat(3)
         call calc_ad1(gammatx,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(1))  
-        call calc_ad1(gammaty,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(3))  
-        call calc_ad1(gammatz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(3))  
+        call calc_ad1(gammaty,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(2))  
+        call calc_ad1(gammatz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk,ad1_gammat(3))          
 
-
-        !ad1_alph
+!ad1_alph!       
         if (evolve_alp) then
         call calc_ad1(alp,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_alph)          
         end if
         
 
-        ! ad1_beta(3)
-        if (evolve_beta) then
+! ad1_beta(3)
+       if (evolve_beta) then
         call calc_ad1(betax,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(1))  
         call calc_ad1(betay,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(2))  
-        call calc_ad1(betaz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(3))          
+        call calc_ad1(betaz,beta_l,nx,ny,nz,i,j,k,dx,dy,dz,di,dj,dk, ad1_beta(3))                 
         end if 
 
       else

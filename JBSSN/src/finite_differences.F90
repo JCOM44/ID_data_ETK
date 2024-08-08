@@ -285,24 +285,23 @@ implicit none
 !         ad1_f: advective derivative of grid function
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  subroutine calc_ad1(array,beta,nx,ny,nz, i,j,k, dx,dy,dz, di,dj,dk,ad1_f)
+  subroutine calc_ad1(array,beta_s,nx,ny,nz, i,j,k, dx,dy,dz, di,dj,dk,ad1_f)
 
     CCTK_INT, intent(in) :: nx, ny, nz
     CCTK_REAL, dimension(nx,ny,nz), intent(in) :: array    
-    CCTK_REAL, intent(in) :: beta(3)
+    CCTK_REAL, intent(in) :: beta_s(3)
     CCTK_INT, intent(in) :: i, j, k, di, dj, dk
     CCTK_REAL, intent(in) :: dx, dy, dz
     CCTK_REAL   d1_f(3)
-    CCTK_REAL, intent(inout) :: ad1_f(3)
-           ad1_f = 0.d0        
+    CCTK_REAL, intent(inout) :: ad1_f
 
            d1_f(1) = di * ( -3.0d0*array(i-di,j,k) - 10.0d0*array(i,j,k) + 18.0d0*array(i+di,j,k)   &
                 - 6.0d0*array(i+2*di,j,k) + array(i+3*di,j,k)) / (12.0d0*dx)
            d1_f(2) = dj * ( -3.0d0*array(i,j-dj,k) - 10.0d0*array(i,j,k) + 18.0d0*array(i,j+dj,k)   &
                 - 6.0d0*array(i,j+2*dj,k) + array(i,j+3*dj,k)) / (12.0d0*dy)
-           d1_f(3) = dk * ( -3*array(i,j,k-dk) - 10.0d0*array(i,j,k) + 18.0d0*array(i,j,k+dk)   &
+           d1_f(3) = dk * ( -3.0d0*array(i,j,k-dk) - 10.0d0*array(i,j,k) + 18.0d0*array(i,j,k+dk)   &
                 - 6.0d0*array(i,j,k+2*dk) + array(i,j,k+3*dk)) / (12.0d0*dz)
-           ad1_f = beta(1)*d1_f(1) + beta(2)*d1_f(2) + beta(3)*d1_f(3)
+           ad1_f = beta_s(1)*d1_f(1) + beta_s(2)*d1_f(2) + beta_s(3)*d1_f(3)
   end subroutine calc_ad1
 
 
