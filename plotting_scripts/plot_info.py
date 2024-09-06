@@ -28,9 +28,20 @@ def set_tick_sizes(ax, major, minor):
     ax.xaxis.LABELPAD=10.
     ax.xaxis.OFFSETTEXTPAD=10.
 
+# check if file already exists to avoid reading everything again
+def check_file(thorn,quantity,file_path):
+	print("Check if file exists...")
+	if os.path.exists(file_path):
+		temp_data = np.loadtxt(file_path,skiprows=1)
+		return np.max(temp_data), True
+	else:
+		print("File does not exist (yet)")
+		return 0.0, False
+		
+
 
 # get info on the simulation properties for a given quantity
-def get_info(thorn,quantity, folder):
+def get_info(thorn,quantity, folder,t0):
         print("Looking for files in the folder: {}".format(folder))
         os.chdir(folder)
         filex = thorn+"-"+quantity+".x.asc"
@@ -45,6 +56,7 @@ def get_info(thorn,quantity, folder):
         
         # Time values
         t = np.unique(datax[:, 8])
+        t=t[t>t0]
         t_n = len(t)
         print("Number of different time values:", t_n)
 
@@ -79,7 +91,8 @@ def fx_timeseries(t,x_p,datax,ixd=0):     #index value of x as input
     t_n = len(t)
     time_values = []
     f_xt_values = []
-    print("Calculating timeseries for x = {}".format(x_p[ixd]))
+    print(f"Calculating timeseries for x = {x_p[ixd]}")
+    print(f"Starting at  t = {t[0]}")
  # create filter for time steps
     for j in range(t_n): 
         t_index = datax[:,8] == t[j]
