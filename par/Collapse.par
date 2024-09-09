@@ -4,15 +4,15 @@
 ############### Active Thorns #############################
 ###########################################################
 
-ActiveThorns = "Time MoL Dissipation"									#Required for method of lines evolution eqs
-ActiveThorns = "Coordbase CartGrid3d Boundary StaticConformal RotatingSymmetry180 CoordGauge"		#Grid, coords, boundaries and symmetries
-ActiveThorns = "SymBase ADMBase TmunuBase HydroBase InitBase ADMCoupling ADMMacros Constants"		# Inital base variable definition and infrastructure
-ActiveThorns = "Formaline SystemTopology LoopControl"							# metadata of the runs, thread layout
-ActiveThorns = "Slab SpaceMask LocalReduce aeilocalinterp"						#arrays, processor reduce and masks
-ActiveThorns = "Carpet CarpetLib CarpetReduce CarpetRegrid2 CarpetInterp CarpetEvolutionMask"		#Carpet grid
-ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic IOUtil"				#Carpet and output
+ActiveThorns = "Time MoL Dissipation"								#Required for method of lines evolution eqs
+ActiveThorns = "Coordbase CartGrid3d Boundary StaticConformal CoordGauge"			#Grid, coords, boundaries and symmetries
+ActiveThorns = "SymBase ADMBase TmunuBase HydroBase InitBase ADMCoupling ADMMacros Constants"	# Inital base variable definition and infrastructure
+ActiveThorns = "Formaline SystemTopology LoopControl"						# metadata of the runs, thread layout
+ActiveThorns = "Slab SpaceMask LocalReduce aeilocalinterp"					#arrays, processor reduce and masks
+ActiveThorns = "Carpet CarpetLib CarpetReduce CarpetRegrid2 CarpetInterp CarpetEvolutionMask"	#Carpet grid
+ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic IOUtil"			#Carpet IO
 ActiveThorns = "ScalarBase ScalarInit SphericalSurface "					#Scalar Canuda
-ActiveThorns = "ML_ADMConstraints NaNChecker TerminationTrigger"								#Quality control
+ActiveThorns = "NaNChecker TerminationTrigger"							#Quality control
 ActiveThorns = "TwoPunctures JBSSN"
 
 
@@ -21,11 +21,9 @@ ActiveThorns = "TwoPunctures JBSSN"
 ###########################################################
 
 CartGrid3D::type         = "coordbase"
-CartGrid3D::domain       = "full"
-CartGrid3D::avoid_origin = "no"  #original: no
-CoordBase::xmin =   0.0
+CoordBase::xmin = -32.0
 CoordBase::ymin = -32.0
-CoordBase::zmin =   0.0
+CoordBase::zmin = -32.0
 CoordBase::xmax = 32.0
 CoordBase::ymax = 32.0
 CoordBase::zmax = 32.0
@@ -39,12 +37,6 @@ CoordBase::boundary_size_z_lower        = 3
 CoordBase::boundary_size_x_upper        = 3
 CoordBase::boundary_size_y_upper        = 3
 CoordBase::boundary_size_z_upper        = 3
-CoordBase::boundary_shiftout_x_lower    = 1
-CoordBase::boundary_shiftout_y_lower    = 0
-CoordBase::boundary_shiftout_z_lower    = 1
-CoordBase::boundary_shiftout_x_upper    = 0
-CoordBase::boundary_shiftout_y_upper    = 0
-CoordBase::boundary_shiftout_z_upper    = 0
 
 
 ###########################################################
@@ -52,16 +44,16 @@ CoordBase::boundary_shiftout_z_upper    = 0
 ###########################################################
 
 
-ActiveThorns = "ReflectionSymmetry"
+#ActiveThorns = "ReflectionSymmetry RotatingSymmetry180"
 
-ReflectionSymmetry::reflection_x = "no"
-ReflectionSymmetry::reflection_y = "no"
-ReflectionSymmetry::reflection_z = "yes"
-ReflectionSymmetry::avoid_origin_x = "no"
-ReflectionSymmetry::avoid_origin_y = "no"
-ReflectionSymmetry::avoid_origin_z = "no"
+#ReflectionSymmetry::reflection_x = "no"
+#ReflectionSymmetry::reflection_y = "no"
+#ReflectionSymmetry::reflection_z = "yes"
+#ReflectionSymmetry::avoid_origin_x = "no"
+#ReflectionSymmetry::avoid_origin_y = "no"
+#ReflectionSymmetry::avoid_origin_z = "no"
 
-RotatingSymmetry180::poison_boundaries  = "yes"
+#RotatingSymmetry180::poison_boundaries  = "yes"
 
 
 TmunuBase::stress_energy_storage = yes
@@ -75,22 +67,16 @@ TmunuBase::prolongation_type     = none
 #####################   Carpet & Cactus   #################
 ###########################################################
 
-HydroBase::timelevels            = 3
+HydroBase::timelevels    = 3
 
 ADMMacros::spatial_order = 4
 
 ADMBase::metric_type     = "physical"
 
-ML_ADMConstraints::timelevels = 3
-
 SpaceMask::use_mask      = "yes"
 
-
-
-Cactus::terminate	= "time"
-Cactus::cctk_final_time = 5000
-
-
+Cactus::terminate	 = "time"
+Cactus::cctk_final_time  = 5000
 
 Carpet::domain_from_coordbase = "yes"
 Carpet::enable_all_storage       = no
@@ -106,9 +92,6 @@ Carpet::init_fill_timelevels     = "yes"
 
 CarpetLib::poison_new_memory = "yes"
 CarpetLib::poison_value      = 114
-
-
-
 
 ###########################################################
 ############# Refinement and Compression   ################
@@ -213,16 +196,11 @@ GRHydro::use_evolution_mask      = "always"
 
 #Eq of state
 eos_omni::poly_gamma		= 2.0
-eos_omni::poly_k		= 98.0	
-
-
-
+eos_omni::poly_k		= 98.0	# we lower it to induce collapse
 
 ###########################################################
 #####################   Metric evolution   ################
 ###########################################################
-
-
 
 ActiveThorns = "GenericFD NewRad"
 
@@ -278,22 +256,10 @@ Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_k0-0.6col
 ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
 ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_k0-0.6coll.h5" 
-#ScalarBase::initial_scalar	= ID_SF_Const
 ScalarInit::set_const_scalar	= "no"
-#ScalarInit::const_scalar_value	= 1e-2
 ScalarInit::reflect_scalar	= "no"
-#ScalarBase::initial_scalar	= ID_SF_Gaussian
-#ScalarInit::scalar_initialize	= "zero_momentum" #"zero_momentum"
-#ScalarInit::l0SF		= 0
-#ScalarInit::m0SF		= 0
-#ScalarInit::r0SF		= 7.0
-#ScalarInit::ampSF		= 1.0e-3
-#ScalarInit::widthSF		= 1.0
 
-#JordanFBSSN::phi_at_inf		= 1.0e-8 # between 0.1 and 0.001
-#JordanFBSSN::B_DEF		= 0.0 #10
-#JordanFBSSN::theory		= "GR"
-#JordanFBSSN::C_BD		= 1.0e-4
+
 ###########################################################
 ################ Spatial finite differencing  #############
 ###########################################################
@@ -475,7 +441,6 @@ IOScalar::outScalar_vars  = "
  ADMBase::lapse
  ADMBase::metric
  ADMBase::curv
- ML_ADMConstraints::ML_Ham
  ScalarBase::phi1
 
 "
@@ -521,7 +486,6 @@ IOHDF5::out2D_vars             = "
         ADMBase::lapse
         ADMBase::shift
 	HydroBase::rho
-        ML_ADMConstraints::ML_Ham
 	ScalarBase::phi1
 	ScalarBase::Kphi1
 "
@@ -541,8 +505,6 @@ IOHDF5::out2D_vars             = "
          ADMBase::lapse
          ADMBase::shift
 	 HydroBase::rho
-         ML_ADMConstraints::ML_Ham
-         ML_ADMConstraints::ML_mom
 "
 
 
