@@ -1,5 +1,5 @@
 #import matplotlib.pyplot as plt
-import os, sys
+import os, sys, re
 import numpy as np
 #import matplotlib.ticker as mticker
 #from matplotlib import rc
@@ -18,6 +18,25 @@ M_to_ms = 1./(1000*M_sol*G/(c*c*c))
 M_to_density = c**5 / (G**3 * M_sol**2) # kg/m^3
 
 
+def IDcomputer(current_computer):
+	if re.search(r"wicky",current_computer):
+	    home_dir='/home/jolivera'  
+	    sim_dir= home_dir+'/simulations/'
+	    print("Computer identified as zwicky.")
+	elif re.search(r"iscovere",current_computer):
+	    home_dir='/home/jmeneses'
+	    sim_dir='/discofs/bg-phys-02/ETK/simulations/'
+	    print("Computer identified as Discoverer.")
+	elif re.search(r"inac",current_computer):
+	    home_dir='/home/tu/tu_tu/tu_pelol01' 
+	    sim_dir= '/beegfs/work/workspace/ws/tu_pelol01-NS_JBSSN-0/simulations/'
+	    print("Computer identified as BinaC.") 
+	else:
+	    home_dir="NULL"
+	    print("Computer not recognized")
+	print("\nSetting central directory:       {}".format(home_dir))
+	print("Setting simulation directory:    {}".format(sim_dir))
+	return home_dir, sim_dir
 
 def set_tick_sizes(ax, major, minor):
     for l in ax.get_xticklines() + ax.get_yticklines():
@@ -91,7 +110,10 @@ def fx_timeseries(t,x_p,datax,ixd=0):     #index value of x as input
     t_n = len(t)
     time_values = []
     f_xt_values = []
-    print(f"Calculating timeseries for x = {x_p[ixd]}")
+    if ixd==0:
+        print(f"Calculating timeseries for x = 0.0")
+    else:
+        print(f"Calculating timeseries for x = {x_p[ixd]}")
     print(f"Starting at  t = {t[0]}")
  # create filter for time steps
     for j in range(t_n): 
@@ -99,7 +121,10 @@ def fx_timeseries(t,x_p,datax,ixd=0):     #index value of x as input
  #create new array only with x and data columns for given t
         f_x_ti = np.vstack(  (datax[t_index,8],  datax[t_index,9]  , datax[t_index,12]  ))  #now x=f_x_ti[0][:] and f(x)=f_x_ti[1][:]
  #create filter for space points
-        x_index = f_x_ti[1][:] == x_p[ixd]
+        if ixd==0:
+           x_index = f_x_ti[1][:] == 0.0
+        else:
+           x_index = f_x_ti[1][:] == x_p[ixd]
 
  # save t, x and f(x,t) in a list (use lists to improve efficiency when extending)
         tj = (f_x_ti[0][x_index]).tolist()
@@ -184,3 +209,19 @@ def plot_funcs(t_rho,rho,t_phi,phi,plot_dir=os.getcwd()):
     #fig.savefig("phi_min.jpeg")
     os.chdir(plot_dir)
     plt.savefig("{}.png".format(name))
+
+
+
+
+# 2D plotting
+
+def save_frame(frame):
+    plt.savefig(os.path.join(frames_dir, f'frame_{frame:04d}.png'))
+    pbar_save.update(1)
+
+
+def apply_second_xaxis(ax):
+   ax2=ax.twiny()
+   ax2.set_xlabel(r't [ms] ')
+   ax2.set_xlim((ax.get_xlim()[0]/M_to_ms, ax.get_xlim()[1]/M_to_ms))
+
