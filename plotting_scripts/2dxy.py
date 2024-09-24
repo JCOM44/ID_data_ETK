@@ -32,23 +32,29 @@ current_dir = os.getcwd()
 saveplotdir = current_dir+"/vids"
 
 
-def update_plot(it_n, time_steps, quant_toplot, scene, grid):
+def update_plot(it_n, time_steps, rhosfef, phifef, scene, grid):
     time = time_steps[it_n]
     fig.suptitle(f'time = {time / M_to_ms:.3f} ms')
-
-    # Recompute new data to plot
-    ploted = quant_toplot.read_on_grid(it_nbr[it_n], grid)
-
-    # Clear the previous contour plot completely
+    
+    # Update rhosfef plot (left subplot)
+    rho_ploted = rhosfef.read_on_grid(it_nbr[it_n], grid)
     for artist in scene[0]:
         artist.remove()  # Remove previous contours
-    # Plot the new data
-    new_contour_plot = plt.contourf(*ploted.coordinates_meshgrid(), np.log10(ploted.data_xyz))
-    scene[0] = new_contour_plot.collections  # Store the new contour artists
-
-    return new_contour_plot.collections  # Return the updated artists for blitting
-
-
+    new_rho_contour = ax1.contourf(*rho_ploted.coordinates_meshgrid(), np.log10(rho_ploted.data_xyz))
+    scene[0] = new_rho_contour.collections
+    
+    # Update phifef plot (right subplot)
+    phi_ploted = phifef.read_on_grid(it_nbr[it_n], grid)
+    for artist in scene[1]:
+        artist.remove()  # Remove previous contours
+    new_phi_contour = ax2.contourf(*phi_ploted.coordinates_meshgrid(), phi_ploted.data_xyz)
+    scene[1] = new_phi_contour.collections
+    
+    # Update subplot titles
+    ax1.set_title(f'rhosfef at t = {time / M_to_ms:.3f} ms')
+    ax2.set_title(f'phifef at t = {time / M_to_ms:.3f} ms')
+    
+    return scene[0] + scene[1]  # Return all updated artists for blitting
 
 # Constants
 
@@ -73,10 +79,13 @@ print("Generated Sim object." )
 
 print("Retrieving 2d field data..." )
 rhosfef = testsim.gf.xy.fields.rho
+
+
 print("Obtaining file information...")
 it_nbr = rhosfef.available_iterations
 time_steps = rhosfef.available_times
 
+phifef = testsim.gf.xy.fields.phi1
 print(f"Available iterations: {len(it_nbr)}")
 print(f"Available timesteps: {len(time_steps)}")
 
@@ -87,17 +96,30 @@ os.makedirs(frames_dir, exist_ok=True)
 # Create initial grid and plot
 grid = UniformGrid([100, 100], x0=[-10, -10], x1=[10, 10])
 rho0_center = rhosfef.read_on_grid(0, grid)
-fig = plt.figure(figsize=(fig_width, fig_height))
+phi0_center = phifef.read_on_grid(0, grid)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(fig_width * 2, fig_height))
 plt.ioff()  # Turn interactive plotting off
-cf = plt.contourf(*rho0_center.coordinates_meshgrid(), np.log10(rho0_center.data_xyz))
-plt.colorbar(cf)
-scene = [cf.collections]  # Store the initial plot
+
+
+# First subplot for rhosfef
+cf1 = ax1.contourf(*rho0_center.coordinates_meshgrid(), np.log10(rho0_center.data_xyz))
+plt.colorbar(cf1, ax=ax1)
+ax1.set_title('rhosfef')
+
+# Second subplot for phifef
+cf2 = ax2.contourf(*phi0_center.coordinates_meshgrid(), phi0_center.data_xyz)
+plt.colorbar(cf2, ax=ax2)
+ax2.set_title('phifef')
+
+#scene = [cf.collections]  # Store the initial plot
+scene = [cf1.collections, cf2.collections]  # Store the initial plots
 
 # Animation settings
 frames = np.arange(0, len(time_steps), 1)
 
 # Function to save each frame
 def save_frame(frame):
+    update_plot(frame, time_steps, rhosfef, phifef, scene, grid)
     plt.savefig(os.path.join(frames_dir, f'frame_{frame:04d}.png'))
     pbar_save.update(1)
 
@@ -108,7 +130,7 @@ with tqdm(total=total_frames, desc="Creating and saving animation", unit="frame"
         fig,
         update_plot,
         frames=frames,
-        fargs=(time_steps, rhosfef, scene, grid),
+        fargs=(time_steps, rhosfef, phifef, scene, grid),
         interval=1000 / fps,
         blit=False,
         repeat=False
@@ -118,7 +140,10 @@ with tqdm(total=total_frames, desc="Creating and saving animation", unit="frame"
     gif_path = os.path.join(saveplotdir, f"{sim_name}.gif")
     anim.save(gif_path, writer='pillow', fps=fps, progress_callback=lambda i, n: pbar_save.update(1))
     print(f"GIF saved to {gif_path}")
-    
+   
+# Reset the progress bar for frame saving
+    pbar_save.reset()
+ 
     # Save individual frames
     for i in range(total_frames):
         save_frame(i)
