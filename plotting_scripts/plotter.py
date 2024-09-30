@@ -25,24 +25,9 @@ sim_name = sys.argv[2]
 var_set = sys.argv[3]
 out_number = sys.argv[4]
 
-if re.search(r"wicky",current_computer):
-    home_dir='/home/jolivera'  
-    sim_dir= home_dir+'/simulations/'
-    print("Computer identified as zwicky.")
-elif re.search(r"iscovere",current_computer):
-    home_dir='/home/jmeneses'
-    sim_dir='/discofs/bg-phys-02/ETK/simulations/'
-    print("Computer identified as Discoverer.")
-elif re.search(r"inac",current_computer):
-    home_dir='/home/tu/tu_tu/tu_pelol01' 
-    sim_dir= '/beegfs/work/workspace/ws/tu_pelol01-NS_JBSSN-0/simulations/'
-    print("Computer identified as BinaC.") 
-else:
-    home_dir="NULL"
-    print("Computer not recognized")
-print("\nSetting central directory:       {}".format(home_dir))
-print("Setting simulation directory:    {}".format(sim_dir))
 
+
+home_dir, sim_dir =  pinf.IDcomputer(current_computer)
 
 current_dir = os.getcwd()
 plot_dir = current_dir+"/plots"
@@ -57,6 +42,9 @@ if re.search(r"imple",var_set):
     var_list = ["rho","phi"]
     thorn_list = ["hydrobase","scalarbase"]
 
+if re.search(r"ollaps",var_set):
+    var_list = ["rho","phi","lapse"]
+    thorn_list = ["hydrobase","scalarbase","admbase"]
 
 elif (debug_on ==1):
 

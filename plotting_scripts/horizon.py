@@ -14,11 +14,23 @@ M_sol = 1.98892e30  # kg
 M_to_ms = 1./(1000*M_sol*G/(c*c*c))
 M_to_density = c**5 / (G**3 * M_sol**2) # kg/m^3
 
-GR_dir="/home/jolivera/simulations/BDColl"
+
+if len(sys.argv) < 4:
+    print("Usage: python3 horizon.py computer_name sim_name print_qlm")
+    sys.exit(1)
+
+current_computer = sys.argv[1]
+sim_name = sys.argv[2]
+print_qlm = sys.argv[3]
+
+home_dir, sim_dir = pinf.IDcomputer(current_computer)
+data_dir= sim_dir + sim_name
+current_dir = os.getcwd()
+saveplotdir = current_dir+"/plots/"
 
 ah=1
 dx=0.02
-sdd= SimDir(GR_dir)
+sdd= SimDir(data_dir)
 sdd_hor = sdd.horizons
 sdd_hor.available_apparent_horizons
 
@@ -35,19 +47,20 @@ current_horizon = sdd_hor.get_apparent_horizon(ah)
 time_found = current_horizon.ah.cctk_iteration.t
 print(f"Horizon found at {time_found[0] / M_to_ms} ms")
 
-horizon_qlm = sdd_hor.get_qlm_horizon(0)
+if print_qlm==1:
+        horizon_qlm = sdd_hor.get_qlm_horizon(0)
 
-time_qlm = time_found
+        time_qlm = time_found
 
-irr_mass = horizon_qlm["irreducible_mass"](time_qlm)
+        irr_mass = horizon_qlm["irreducible_mass"](time_qlm)
 
-print(
-            f"""\
-QuasiLocalMeasures:
-Time:                     {time_qlm:4.5f}
-Irreducible mass:         {irr_mass:4.5f}
-Christodoulou mass:       {horizon_qlm['mass'](time_qlm):4.5f}
-Angular momentum:         {horizon_qlm['spin'](time_qlm):4.5f}"""
+        print(
+                    f"""\
+        QuasiLocalMeasures:
+        Time:                     {time_qlm:4.5f}
+        Irreducible mass:         {irr_mass:4.5f}
+        Christodoulou mass:       {horizon_qlm['mass'](time_qlm):4.5f}
+        Angular momentum:         {horizon_qlm['spin'](time_qlm):4.5f}"""
         )
 
 plt.ylabel(f"Radius of horizon [km]")
@@ -69,4 +82,7 @@ pinf.apply_second_xaxis(plt.gca())
 
 
 
-plt.savefig("horizon.pdf")
+plt.savefig(f"{saveplotdir}horizon_{sim_name}.pdf")
+subprocess.run(f"git add plots/*",shell=True)
+subprocess.run(f'git commit -m "horizon {sim_name}" ',shell= True)
+subprocess.run("git push",shell=True)

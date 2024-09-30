@@ -51,8 +51,8 @@ def set_tick_sizes(ax, major, minor):
 def check_file(thorn,quantity,file_path):
 	print("Check if file exists...")
 	if os.path.exists(file_path):
-		temp_data = np.loadtxt(file_path,skiprows=1)
-		return np.max(temp_data), True
+		data = np.loadtxt(file_path,skiprows=1)
+		return np.max(data[:,0]), True
 	else:
 		print("File does not exist (yet)")
 		return 0.0, False
@@ -225,3 +225,7 @@ def apply_second_xaxis(ax):
    ax2.set_xlabel(r't [ms] ')
    ax2.set_xlim((ax.get_xlim()[0]/M_to_ms, ax.get_xlim()[1]/M_to_ms))
 
+def apply_second_xaxis_distance(ax):
+   ax2=ax.twiny()
+   ax2.set_xlabel(r'x [km] ')
+   ax2.set_xlim((ax.get_xlim()[0]*1.477, ax.get_xlim()[1]*1.477))

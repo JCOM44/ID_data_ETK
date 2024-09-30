@@ -6,15 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import plot_info as pinf
 
-#directories
-sims_dir = "/home/jolivera/simulations"
-python_dir= '/home/jolivera/python'
-saveplotdir= '/home/jolivera/python/plots'
-datadir = "/home/jolivera/ET_files/ID_data_ETK/plotting_scripts/plots/"
-datfile_dir = '/home/jolivera/python/dat_files/'
-
-direc = sims_dir+"/BDColl/output-0000/output_directory"   #BD no A mid
-
+#define plot info directory 
 
 title_coll = {
     "rho": "Central rest-mass density",
@@ -31,24 +23,42 @@ M_sol = 1.98892e30  # kg
 M_to_ms = 1./(1000*M_sol*G/(c*c*c))
 M_to_density = c**5 / (G**3 * M_sol**2) # kg/m^3
 
+if len(sys.argv) < 4:
+    print("""Usage: python3 1d_slice_mov.py computer_name sim_name adjust_axs?
+          computer_name: Specify computer (to add paths)
+          sim_name: name of the ETK simulation 
+          adjust_axs: 1 to keep axis in plot fixed, 0 to auto adjust
+           """)
+    sys.exit(1)
+
+current_computer = sys.argv[1]
+sim_name = sys.argv[2]
+adj_axs = sys.argv[3]
+
+home_dir, sim_dir = pinf.IDcomputer(current_computer)
+direc= sim_dir + sim_name+"/output-0000/output_directory" 
+current_dir = os.getcwd()
+saveplotdir = current_dir+"/vids/"
+tmp_dir = saveplotdir+"/"+sim_name
+
+
 j=0
 thorns = ["hydrobase","admbase","scalarbase"]
 quantities = ["rho","lapse","phi"]
-ax_lims = [(-0.01,0.005),(-0.01,1),(-0.01,0.2)]
+ax_lims = [(-0.0001,0.006),(-0.01,1),(-0.03,0.4)]
 
-tk1,xk1,rl1,rln1,datax = pinf.get_info(thorns[0],quantities[0],direc)
+tk1,xk1,rl1,rln1,datax = pinf.get_info(thorns[0],quantities[0],direc,0.0)
 
-tmp_dir = python_dir+"/tmp/"
-os.mkdir(tmp_dir)
+if not os.path.isdir(tmp_dir):
+     os.mkdir(tmp_dir)
 
-for itd in range(0,len(tk1),10):
-#for itd in range():
+for itd in range(0,len(tk1),1):
 
 # Plot the data
   fig, axs = plt.subplots(1, 3, figsize=(18, 8))
 
   for thorn, quantity, ax,lim_ax in zip(thorns,quantities, axs,ax_lims):
-    tk1,xk1,rl1,rln1,datax = pinf.get_info(thorn,quantity,direc)
+    tk1,xk1,rl1,rln1,datax = pinf.get_info(thorn,quantity,direc,0.0)
 
     print("Getting 1d-x slice at t = {}".format(tk1[itd]))
     x_index = datax[:,8] == tk1[itd]
@@ -73,10 +83,12 @@ for itd in range(0,len(tk1),10):
     f_xi_tj_sorted = f_xi_tj[sorted_indices]
 
 # Plot with sorted data
-    ax.plot(xj_sorted, f_xi_tj_sorted, label=rf'BD $k_0-0.6$  t={tj[0]/M_to_ms:.4f}', color='red')
+    ax.plot(xj_sorted, f_xi_tj_sorted, label=rf'BD $k_0-0.6$  t={tj[0]/M_to_ms:.4f} ms', color='red')
 
     ax.set_xlabel(r'X [$M$]', fontsize=14)
-    ax.set_ylim(lim_ax)
+    if adj_axs:
+       ax.set_ylim(lim_ax)
+    ax.set_xlim(-35,35)
     #ax.set_ylabel(r'$\{}_c(t)/\{}_c(0)-1$'.format(quantity,quantity), fontsize=14)
     ax.legend()
     ax.set_title(title_coll[quantity], fontsize=16)
@@ -86,19 +98,12 @@ for itd in range(0,len(tk1),10):
 # Show the plot
   j=j+1
   plt.tight_layout()
-  plt.savefig(f"{tmp_dir}p_{j}.png")
-  #plt.show()
+  plt.savefig(f"{tmp_dir}/p_{j}.png")
 
 
-os.chdir(tmp_dir)
+os.chdir(current_dir)
+subprocess.run(f"git add vids/*",shell=True)
+subprocess.run(f'git commit -m "1d slice frames {sim_name}" ',shell= True)
+subprocess.run("git push",shell=True)
 
-ffcommand = "ffmpeg -framerate 20 -i p_%d.png -c:v libx264 -pix_fmt yuv420p out.mp4" 
-mvff = f"mv out.mp4 {python_dir}"
-
-subprocess.run(ffcommand,shell=True)
-subprocess.run(mvff,shell=True)
-
-os.chdir(python_dir)
-
-shutil.rmtree(tmp_dir)
 
