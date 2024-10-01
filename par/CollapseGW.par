@@ -13,7 +13,7 @@ ActiveThorns = "Carpet CarpetLib CarpetReduce CarpetRegrid2 CarpetInterp CarpetE
 ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic IOUtil"			# Carpet IO
 ActiveThorns = "ScalarBase ScalarInit JBSSN"							# Modified Scalar Jordan evolution
 ActiveThorns = "NaNChecker TerminationTrigger"							# Quality control
-ActiveThorns = "SphericalSurface WeylScal4 Multipole QuasiLocalMeasures" 			# GW extraction 
+ActiveThorns = "NPScalars SphericalSurface WeylScal4 Multipole QuasiLocalMeasures" 			# GW extraction 
 
 
 ###########################################################
@@ -262,13 +262,17 @@ Hydro_rnsid::RNS_Gamma 		= 2.0
 Hydro_rnsid::RNS_K 		= 100.0
 Hydro_rnsid::save_2Dmodel 	= "no"
 Hydro_rnsid::recover_2Dmodel	= "yes"
-Hydro_rnsid::model2D_file	= "/home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK/hydro_DEF_B--4.5_ax-0.95_coll.h5"
+Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEF_B--4.5_ax-0.95_coll.h5"
 
 ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
-ScalarInit::SFmodel_file	= "/home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK/phi_DEF_B--4.5_ax-0.95_coll.h5" 
+ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEF_B--4.5_ax-0.95_coll.h5" 
 ScalarInit::set_const_scalar	= "no"
 ScalarInit::reflect_scalar	= "no"
+
+#File directory:
+# zwicky: /home/jolivera/ET_files/ID_data_ETK
+# binac: /home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK
 
 
 ###########################################################
