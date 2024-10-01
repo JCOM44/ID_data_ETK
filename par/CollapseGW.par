@@ -124,8 +124,9 @@ CarpetRegrid2::radius_1[2]  = 32.0   #0.64
 CarpetRegrid2::radius_1[3]  = 20.0   #0.32
 CarpetRegrid2::radius_1[4]  = 14.0   #0.16	    #initial level, thrugh CFL condition, timestep is 0.04
 CarpetRegrid2::radius_1[5]  = 10.0   #0.08	    #dinamically added through trigger, when lapse<0.2
-CarpetRegrid2::radius_1[6]  = 6.0   #0.015625       #dinamically added through trigger, when lapse<0.1
-CarpetRegrid2::radius_1[7]  = 4.0   #0.0078125	    #dinamically added through trigger, when lapse<0.001 
+CarpetRegrid2::radius_1[6]  = 6.0   #0.04           #dinamically added through trigger, when lapse<0.1
+CarpetRegrid2::radius_1[7]  = 4.0   #0.02	    #dinamically added through trigger, when lapse<0.0015 
+CarpetRegrid2::radius_1[8]  = 2.0   #0.01	    #dinamically added through trigger, when lapse<0.001 
 
 
 
@@ -221,8 +222,8 @@ JBSSN::calculate_constraints		= yes
 
 ScalarBase::scalar_evolution_method		= "JBSSN"
 JBSSN::theory				= "DEF"
-JBSSN::k0BD				= 0.6
-JBSSN::B_DEF				= 10.0
+JBSSN::k0BD				= 0.0
+JBSSN::B_DEF				= 9.0
 JBSSN::phi_at_inf				= 1.0e-5
 JBSSN::show_debug				= "yes"
 
@@ -243,19 +244,29 @@ ADMBase::initial_dtlapse        = "zero"
 ADMBase::initial_dtshift        = "zero"
 
 Hydro_rnsid::rotation_type 	= "uniform"
-Hydro_rnsid::axes_ratio 	= 0.75
+Hydro_rnsid::axes_ratio 	= 0.95
 
-Hydro_rnsid::rho_central	= 3.154e-3  #1.28e-3 #1.7082e-3
+# rho_central 
+# BD
+# for ax 0.95 : 3.7749643874e-3
+# for ax 0.85 : 3.6602540378e-3
+# for ax 0.75 : 3.4852813742e-3
+# 
+# DEF
+# for ax 0.95 : 3.2462112512e-3
+
+
+Hydro_rnsid::rho_central	= 3.2462112512e-3  #1.28e-3 #1.7082e-3
 Hydro_rnsid::eos_type 		= "poly"
 Hydro_rnsid::RNS_Gamma 		= 2.0
 Hydro_rnsid::RNS_K 		= 100.0
 Hydro_rnsid::save_2Dmodel 	= "no"
 Hydro_rnsid::recover_2Dmodel	= "yes"
-Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_k0-0.6_ax-0.75_coll.h5"
+Hydro_rnsid::model2D_file	= "/home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK/hydro_DEF_B--4.5_ax-0.95_coll.h5"
 
 ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
-ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_k0-0.6_ax-0.75_coll.h5" 
+ScalarInit::SFmodel_file	= "/home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK/phi_DEF_B--4.5_ax-0.95_coll.h5" 
 ScalarInit::set_const_scalar	= "no"
 ScalarInit::reflect_scalar	= "no"
 
@@ -278,25 +289,6 @@ Dissipation::vars   = "
 #  JordanFBSSN::gammat
 "
 
-
-###########################################################
-#####################   puncture data   ###################
-###########################################################
-
-#only relevant when working with binaries
-
-#TwoPunctures::par_b          =  0.1
-#TwoPunctures::par_m_plus     =  1.6
-#TwoPunctures::par_P_plus [1] = +0.3331917498
-#TwoPunctures::schedule_in_ADMBase_InitialData = no
-#TwoPunctures::par_m_minus       =  0.0
-#TwoPunctures::initial_lapse_psi_exponent  = -2.0  #pre collapsed lapse
-
-
-
-#TwoPunctures::TP_epsilon = 1.0e-2
-#TwoPunctures::TP_Tiny    = 1.0e-2
-#TwoPunctures::verbose = yes
 
 #########################################################
 ################# Horizon finder ########################
@@ -371,16 +363,19 @@ SphericalSurface::name          [2] = "Wave ext at r 250"
 ################# Wave extraction  ########################
 ###########################################################
 
-QuasiLocalMeasures::num_surfaces  = 2
+QuasiLocalMeasures::num_surfaces  = 3
 QuasiLocalMeasures::spatial_order = 4
 QuasiLocalMeasures::interpolator  = "Lagrange polynomial interpolation"
 QuasiLocalMeasures::interpolator_options = "order = 4"
-QuasiLocalMeasures::surface_name[0] = "Wave ext at r 100"
-QuasiLocalMeasures::surface_name[1] = "Wave ext at r 250"
+QuasiLocalMeasures::surface_index[0] = 0
+QuasiLocalMeasures::surface_name[1] = "Wave ext at r 100"
+QuasiLocalMeasures::surface_name[2] = "Wave ext at r 250"
 
 WeylScal4::offset	= 1e-8
 WeylScal4::fd_order	= "4th"
 WeylScal4::verbose	= 0
+
+NPScalars::NP_order     = 4
 
 Multipole::nradii 	= 8
 Multipole::out_every  	= 128
@@ -392,12 +387,23 @@ Multipole::radius[4]    = 150
 Multipole::radius[5]    = 200
 Multipole::radius[6]    = 250
 Multipole::radius[7]    = 300
-Multipole::variables	= "WeylScal4::Psi4r{sw=-2 cmplx='WeylScal4::Psi4i' name='Psi4'}"
+
+Multipole::ntheta       = 120
+Multipole::nphi         = 240
+
+Multipole::integration_method = "Simpson"
+Multipole::variables	= "
+	WeylScal4::Psi4r{sw=-2 cmplx='WeylScal4::Psi4i' name='Psi4'}
+	ScalarBase::phi1{sw=0 name='phi'}
+        NPScalars::psi4re{sw=-2 cmplx='NPScalars::psi4im' name='NP_Psi4'}
+"
 Multipole::l_max	= 6
 
 ###########################################################
 ################# Mask parameters  ########################
 ###########################################################
+
+###  To add excision 
 
 ActiveThorns = "SetMask_SphericalSurface"
 
@@ -405,7 +411,7 @@ ActiveThorns = "SetMask_SphericalSurface"
 #SetMask_SphericalSurface::SetMask_RadiusFactor[0] = 0.6
 #SetMask_SphericalSurface::SetMask_TrueShape[0]    = "false"
 
-#CarpetMask::excluded_surface[0] = 0				#new addition
+#CarpetMask::excluded_surface[0] = 0				#
 #CarpetMask::excluded_surface_factor[0] = 1.0			#
 
 
@@ -455,12 +461,21 @@ Trigger::Trigger_Once               	 [3] =  1
 Trigger::Trigger_Checked_Variable   	 [3] = "ADMBase::alp"
 Trigger::Trigger_Reduction          	 [3] = "minimum"
 Trigger::Trigger_Relation           	 [3] = "<"
-Trigger::Trigger_Checked_Value     	 [3] = 0.001
+Trigger::Trigger_Checked_Value     	 [3] = 0.002
 Trigger::Trigger_Reaction           	 [3] = "steerscalar"
 Trigger::Trigger_Steered_Scalar	    	 [3] = "CarpetRegrid2::num_levels[0]" # == num_levels_1
 Trigger::Trigger_Steered_Scalar_Value	 [3] = "8"
 
 
+#add refinement level
+Trigger::Trigger_Once               	 [4] =  1
+Trigger::Trigger_Checked_Variable   	 [4] = "ADMBase::alp"
+Trigger::Trigger_Reduction          	 [4] = "minimum"
+Trigger::Trigger_Relation           	 [4] = "<"
+Trigger::Trigger_Checked_Value     	 [4] = 0.001
+Trigger::Trigger_Reaction           	 [4] = "steerscalar"
+Trigger::Trigger_Steered_Scalar	    	 [4] = "CarpetRegrid2::num_levels[0]" # == num_levels_1
+Trigger::Trigger_Steered_Scalar_Value	 [4] = "9"
 
 ###########################################################
 #####################   I/O   #############################
