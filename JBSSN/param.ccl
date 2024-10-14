@@ -100,6 +100,12 @@ CCTK_REAL B_DEF "value of B=-2beta in DEF theory"
  *:*
 } 8.00
 
+CCTK_REAL mass_phi "mass of scalar field"
+{
+ 0:*
+} 0.0d0
+
+
 private:
 
 BOOLEAN k_sum "Apply sum correction to derivatives"
