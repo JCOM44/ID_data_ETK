@@ -623,8 +623,10 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
              BKphi       = Bphi*lphi*lKphi
 
             ham_phi =  (2.0d0 /B_DEF - 1.5d0*lphi2) * lKphi*lKphi
-            ham_phi = ham_phi +  0.5d0 * (1.0d0 + 2.0d0/B_DEF - lphi2/2.0d0) *tr_dphi_dphi
-            ham_phi = ham_phi + 2.0d0*lphi*(-trk * lKphi + tr_cd2_phi_new)             
+            !ham_phi = ham_phi +  0.5d0 * (1.0d0 + 2.0d0/B_DEF - lphi2/2.0d0) *tr_dphi_dphi
+            ham_phi = ham_phi +  (2.0d0 + 2.0d0/B_DEF + lphi2/2.0d0) *tr_dphi_dphi
+            ham_phi = ham_phi + 2.0d0*lphi*(-trk * lKphi + tr_cd2_phi_new) 
+            ham_phi = ham_phi + 2.0d0 * mass_phi*mass_phi * lphi2 *Bphi/B_DEF           
                        
             do a=1,3
               do b=1,3
@@ -641,7 +643,7 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
 
         
         ham = ham - ham_phi
-!        mom = mom - mom_phi
+        mom = mom - mom_phi
 
 else 
         Bphi = 1.0d0       
