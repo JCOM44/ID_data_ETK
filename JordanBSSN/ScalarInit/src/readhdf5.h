@@ -14,6 +14,7 @@ void hdf5_read_varSF(int *sdiv, int *mdiv,
                    double *r_e,	
 		   /* ------------------- */
                    double *betaphi,
+		   double *massphi,
        /* ------------------- */
                    double *s_qp,  /*SDIV+1*/
                    double *mu,    /*MDIV+1*/

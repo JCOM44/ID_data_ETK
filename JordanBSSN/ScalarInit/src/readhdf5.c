@@ -19,6 +19,7 @@ void hdf5_read_varSF(int *sdiv, int *mdiv,
                    double *r_e,	
 		   /* ------------------- */
                    double *betaphi,
+		   double *massphi,
        /* ------------------- */
                    double *s_qp,  /*SDIV+1*/
                    double *mu,    /*MDIV+1*/
@@ -49,13 +50,14 @@ void hdf5_read_varSF(int *sdiv, int *mdiv,
   /* ============================================= */
   /*   Create and save the data attributes         */ 
   /* ============================================= */
-  int attrblistLEN=5;
+  int attrblistLEN=6;
   struct {char  name[128];hid_t H5type; void * data;} attrblist[] ={
     {"axis_ratio"  , H5T_NATIVE_DOUBLE, r_ratio},
     {"re"          , H5T_NATIVE_DOUBLE, r_e},
     {"SDIV"        , H5T_NATIVE_INT, sdiv},
     {"MDIV"         ,H5T_NATIVE_INT, mdiv},
-    {"alphaphi"     ,H5T_NATIVE_DOUBLE, betaphi}
+    {"betaphi"     ,H5T_NATIVE_DOUBLE, betaphi},
+    {"massphi"    ,H5T_NATIVE_DOUBLE, massphi}
   };
   /* ============================================= */
   /*  Read the data set for variables and save it  */ 
