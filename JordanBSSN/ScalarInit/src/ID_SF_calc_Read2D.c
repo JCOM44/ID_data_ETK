@@ -40,7 +40,7 @@ ID_SF_Read2D (CCTK_ARGUMENTS)
   /*Reading related parameters */
 int m,s;
 int sdiv,mdiv;
-double  betaphi,axes_ratio,r_e;
+double  massphi,betaphi,axes_ratio,r_e;
 double *s_gp,*mu_gp;
 double **phi_td;
 
@@ -67,7 +67,7 @@ double **phi_td;
 
 //CCTK_INFO("Array initialized");
 /*=============Read from the HDF5 file and store in local variables====*/
-hdf5_read_varSF(&sdiv,&mdiv,SFmodel_file,&axes_ratio,&r_e,&betaphi,s_gp,mu_gp,phi_td);
+hdf5_read_varSF(&sdiv,&mdiv,SFmodel_file,&axes_ratio,&r_e,&betaphi,&massphi,s_gp,mu_gp,phi_td);
 
 //CCTK_INFO("H5 file read");
 
