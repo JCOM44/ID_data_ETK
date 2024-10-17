@@ -46,15 +46,6 @@ CoordBase::boundary_size_z_upper        = 3
 
 #ActiveThorns = "ReflectionSymmetry RotatingSymmetry180"
 
-#ReflectionSymmetry::reflection_x = "no"
-#ReflectionSymmetry::reflection_y = "no"
-#ReflectionSymmetry::reflection_z = "yes"
-#ReflectionSymmetry::avoid_origin_x = "no"
-#ReflectionSymmetry::avoid_origin_y = "no"
-#ReflectionSymmetry::avoid_origin_z = "no"
-
-#RotatingSymmetry180::poison_boundaries  = "yes"
-
 
 TmunuBase::stress_energy_storage = yes
 TmunuBase::stress_energy_at_RHS  = yes
@@ -417,6 +408,7 @@ IOHDF5::out2D_vars             = "
         ADMBase::lapse
         ADMBase::shift
 	HydroBase::rho
+ 	ScalarBase::phi1
 "
 
 
