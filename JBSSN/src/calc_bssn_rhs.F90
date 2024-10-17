@@ -66,7 +66,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   CCTK_REAL                tr_cd2_ww, tr_dww_dww, aux
   CCTK_REAL                tr_cd2_phi, tr_dww_dphi, tr_dalp_dphi, tr_dphi_dphi, tr_cd2_phi_new
   CCTK_REAL                divbeta, aadbeta(3,3), hhdbeta(3,3)
-  CCTK_REAL                c_dalp_dphi, c_cd2_phi, c_cd2_phi_new, c_dww_dphi, c_dphi_dphi  
+  CCTK_REAL                c_dalp_dphi, c_cd2_phi, c_cd2_phi_new, c_dww_dphi, c_dphi_dphi, c_lKphi  
 
   ! Matter variables
   CCTK_REAL                srcE, srcjdi(3), srcji(3), srcSij(3,3),    &
@@ -213,7 +213,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP hhdbeta, aadbeta, tr_ll, sq_aa, a2, trr, tf_c_ll, tf_c_ri, au,  &
   !$OMP myeta, r2, &
 
-  !$OMP c_dalp_dphi, c_cd2_phi, c_cd2_phi_new, c_dww_dphi, c_dphi_dphi, & 
+  !$OMP c_dalp_dphi, c_cd2_phi, c_cd2_phi_new, c_dww_dphi, c_dphi_dphi, c_lKphi,& 
   !$OMP srcE, srcjdi, srcji, srcSij, srcS_ww2, srcSijTF, src_trT, &
   !$OMP a, b, c, l, m, n, p, q, jac, hes)
   do k = 1+cctk_nghostzones(3), cctk_lsh(3)-cctk_nghostzones(3)
@@ -717,7 +717,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        if (CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"BD")  .OR.  CCTK_EQUALS(theory,"onlymetric") ) then                       !---define BD
             Bphi        = exp(lphi)
             BKphi       = Bphi * lKphi
-            omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-1.5d0
+            omega_Bphi  = 1.0d0/(2.0d0*k0BD*k0BD)-3.0d0/2.0d0
             domega_Bphi = 0.0d0 
             
        end if                                                   ! -- end  Define BD
@@ -725,38 +725,38 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"DEFdecoupling") .OR. CCTK_EQUALS(theory,"onlySF")) then                      !--- Define DEF
                Bphi        = exp(lphi2/2.0d0)
                BKphi       = Bphi*lphi*lKphi
-               omega_Bphi  = 2.0d0/(B_DEF*lphi2)-1.5d0
+               omega_Bphi  = 2.0d0/(B_DEF*lphi2)-3.0d0/2.0d0
                domega_Bphi = -4.0d0/(B_DEF*lphi2*lphi2*Bphi)               
        end if                                                   ! -- end define DEF
 
             !---- Calculate traces             
 
-                tr_dalp_dphi   = 0.0d0
-                tr_cd2_phi     = 0.0d0
+                tr_dalp_dphi = 0.0d0
+                tr_cd2_phi   = 0.0d0
                 tr_cd2_phi_new = 0.0d0
-                tr_dww_dphi    = 0.0d0
-                tr_dphi_dphi   = 0.0d0
+                tr_dww_dphi  = 0.0d0
+                tr_dphi_dphi = 0.0d0
 
-                c_dalp_dphi    = 0.0d0
-                c_cd2_phi      = 0.0d0
-                c_cd2_phi_new  = 0.0d0
-                c_dww_dphi     = 0.0d0
-                c_dphi_dphi    = 0.0d0 
+                c_dalp_dphi   = 0.0d0
+                c_cd2_phi     = 0.0d0
+                c_cd2_phi_new = 0.0d0
+                c_dww_dphi    = 0.0d0
+                c_dphi_dphi   = 0.0d0 
                 do a =1,3
-                   do b = 1,3                                               
-                        if (k_sum/=0) then  ! with summation compensation
+                   do b = 1,3                                                
+                          if (k_sum/=0) then  ! with summation compensation
                                 call kahan_sum(tr_dalp_dphi,c_dalp_dphi,hu(a,b)*d1_alph(a)*d1_lphi(b))
                                 call kahan_sum(tr_cd2_phi,c_cd2_phi,hu(a,b)*cd2_lphi(a,b))
                                 call kahan_sum(tr_cd2_phi_new,c_cd2_phi_new,hu(a,b)*(cd2_lphi(a,b)+cW_dphi(a,b))*ww*ww)
                                 call kahan_sum(tr_dww_dphi,c_dww_dphi,hu(a,b)*d1_ww(a)*d1_lphi(b))
                                 call kahan_sum(tr_dphi_dphi,c_dphi_dphi,hu(a,b)*d1_lphi(a)*d1_lphi(b))
-                        else 
+                           else 
                                 tr_dalp_dphi = tr_dalp_dphi + hu(a,b) * d1_alph(a)*d1_lphi(b)
                                 tr_cd2_phi   = tr_cd2_phi   + hu(a,b) * cd2_lphi(a,b)
                                 tr_cd2_phi_new   = tr_cd2_phi_new   + hu(a,b) * (cd2_lphi(a,b)+cW_dphi(a,b) )*ww*ww
                                 tr_dww_dphi  = tr_dww_dphi  + hu(a,b) * d1_ww(a) * d1_lphi(b)
                                 tr_dphi_dphi = tr_dphi_dphi + hu(a,b) * d1_lphi(a)*d1_lphi(b)
-                        end if         
+                           end if         
                     end do
                 end do
 
@@ -1261,20 +1261,13 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 ! --- Equations in Einstein frame
            if (CCTK_EQUALS(theory,"BDdecouplingEF") .OR. CCTK_EQUALS(theory,"DEFdecouplingEF") ) then
                    rhs_lphi  = rhs_lphi-2.0d0 * alph * lKphi
-                   rhs_lKphi = rhs_lKphi -0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
-                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
                    rhs_phi(i,j,k) = rhs_lphi
-                   if (CCTK_EQUALS(theory,"BDdecouplingEF")) then 
-                       rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*k0BD    
-                       rhs_Kphi(i,j,k) = rhs_lKphi
-                       if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
-                            write(*,*) "rhs phi ", rhs_lphi 
-                            write(*,*) "rhs Kphi ", rhs_lKphi                            
-                       end if        
-                   end if
-                   if (CCTK_EQUALS(theory,"DEFdecouplingEF")) then
-                           rhs_Kphi(i,j,k) = rhs_lKphi - 2*pi*alph*src_trT*lphi*betaDEF
-                   end if
+
+                   rhs_lKphi = rhs_lKphi - 0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
+                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
+                   rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD + betaDEF*lphi)     
+                   rhs_lKphi = rhs_lKphi + 0.5d0 * alph * lphi * mass_phi*mass_phi                
+                   rhs_Kphi(i,j,k) = rhs_lKphi
            end if
 ! ----- End eqs in Einstein frame
 
@@ -1301,10 +1294,21 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     end if 
               
                     if (CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"onlySF")) then  ! add coupling if DEF                                                
-                        rhs_lKphi = rhs_lKphi -ww*ww*tr_dalp_dphi &
-                               + alph*( -tr_cd2_phi_new + trk*lKphi &                        
-                               + lphi*(lKphi*lKphi - ww*ww*tr_dphi_dphi &
-                               + 2.0d0*pi*src_trT*B_DEF/Bphi + mass_phi*mass_phi*Bphi))
+                        if (k_sum/=0) then  ! with summation compensation
+                                c_lKphi = 0.0d0
+                                call kahan_sum(rhs_lKphi,c_lKphi,-ww*ww*tr_dalp_dphi)
+                                call kahan_sum(rhs_lKphi,c_lKphi,-alph*tr_cd2_phi_new)
+                                call kahan_sum(rhs_lKphi,c_lKphi,alph*trk*lKphi)
+                                call kahan_sum(rhs_lKphi,c_lKphi,alph*lphi*lKphi*lKphi)
+                                call kahan_sum(rhs_lKphi,c_lKphi,-alph*lphi*ww*ww*tr_dphi_dphi)
+                                call kahan_sum(rhs_lKphi,c_lKphi,alph*lphi*2.0d0*pi*src_trT*B_DEF/Bphi)
+                                call kahan_sum(rhs_lKphi,c_lKphi,alph*lphi*mass_phi*mass_phi*Bphi)
+                        else
+                                rhs_lKphi = rhs_lKphi -ww*ww*tr_dalp_dphi &
+                                       + alph*( -tr_cd2_phi_new + trk*lKphi &                        
+                                       + lphi*(lKphi*lKphi - ww*ww*tr_dphi_dphi &
+                                       + 2.0d0*pi*src_trT*B_DEF/Bphi + mass_phi*mass_phi*Bphi))
+                         end if 
                     end if 
 
                         rhs_phi(i,j,k) = rhs_lphi
@@ -1314,8 +1318,6 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
            end if               
 !-------- End Jordan Frame SF ev
 
-
-!-------- Debug
             if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
                     write(*,*) "---------- SF RHS --------------"
                     write(*,*) "r =,", r_debug
@@ -1340,7 +1342,6 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "---------------------"
             end if            
              
-!--------- ENd DEBUG
 
     end if  
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
