@@ -212,7 +212,6 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP rhs_ww, rhs_hh, rhs_trk, rhs_aa, rhs_gammat, rhs_beta, rhs_lphi, rhs_lKphi, &
   !$OMP hhdbeta, aadbeta, tr_ll, sq_aa, a2, trr, tf_c_ll, tf_c_ri, au,  &
   !$OMP myeta, r2, &
-
   !$OMP c_dalp_dphi, c_cd2_phi, c_cd2_phi_new, c_dww_dphi, c_dphi_dphi, c_lKphi,& 
   !$OMP srcE, srcjdi, srcji, srcSij, srcS_ww2, srcSijTF, src_trT, &
   !$OMP a, b, c, l, m, n, p, q, jac, hes)
@@ -760,6 +759,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     end do
                 end do
 
+           !--- Debug options
             if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
             write(*,*) "---------------------------" 
             write(*,*) "---------------------------"
@@ -1067,6 +1067,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "src_trT", src_trT
                     end if 
 
+                ! if Scalar field is present 
                if(JordanFrame .OR. CCTK_EQUALS(theory,"onlymetric")) then  ! begin evolve Jordan
                        !!! Normalize matter sources with the SF
                        srcE     = srcE/Bphi
@@ -1111,19 +1112,17 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                             aa_phi(a,b)     = ww*ww*( d1_lphi(a)*d1_lphi(b)*(lphi2+1.0d0) + lphi *(cd2_lphi(a,b) + cW_dphi(a,b)) ) - aa(a,b)*lKphi*lphi 
                             aa_phi(a,b)     = aa_phi(a,b) - ww*hh(a,b)*( ww*(lphi2+1.0d0)*tr_dphi_dphi  + lphi*(ww*tr_cd2_phi - tr_dww_dphi) )/3.0d0   ! take trace
                                 
-
                             !Need to check this next step                            
-                            gammat_omega(a) = gammat_omega(a) + (1.0d0+2.0/B_DEF-lphi2/2.0d0) * lKphi * hu(a,b)*d1_lphi(b) 
+                            gammat_omega(a) = gammat_omega(a) + (1.0d0+2.0d0/B_DEF-lphi2/2.0d0) * lKphi * hu(a,b)*d1_lphi(b) 
                             gammat_phi(a)   = gammat_phi(a) + hu(a,b)*(lphi*d1_lKphi(b) - trk * d1_lphi(b)*lphi/3.0d0)  -  au(a,b)*d1_lphi(b)*lphi
                             end do
                           end do
-
-
                     end if  !end DEF
 
                 end if                   !--- End JordanFranme 
 
 
+                ! DEBUG
                     if (r(i,j,k)==r_debug) THEN
                     write(*,*) "---------------------------" 
                     write(*,*) "r = ", r(i,j,k)
@@ -1146,10 +1145,10 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     end if     
 !                    !
        !------------ Correct source terms ---------
-       rhs_trk    = rhs_trk    + pi4  * alph * (srcE + ww*ww * srcS_ww2) !+ alph*(trk_omega + trk_phi)
+       rhs_trk    = rhs_trk    + pi4  * alph * (srcE + ww*ww * srcS_ww2) 
        rhs_aa     = rhs_aa     - pi8  * alph * ww*ww * srcSijTF
        rhs_gammat = rhs_gammat - pi16 * alph * srcji
-
+        ! ---- add scalar field terms as source too
       if(JordanFrame .OR. CCTK_EQUALS(theory,"onlymetric")) then
        rhs_trk    = rhs_trk + alph*(  trk_omega + trk_phi - trk_mass)
        rhs_aa     = rhs_aa - alph * (ww*ww*aa_omega*Omega_Bphi + aa_phi )
@@ -1262,7 +1261,6 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
            if (CCTK_EQUALS(theory,"BDdecouplingEF") .OR. CCTK_EQUALS(theory,"DEFdecouplingEF") ) then
                    rhs_lphi  = rhs_lphi-2.0d0 * alph * lKphi
                    rhs_phi(i,j,k) = rhs_lphi
-
                    rhs_lKphi = rhs_lKphi - 0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
                    rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
                    rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD + betaDEF*lphi)     
@@ -1308,7 +1306,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                                        + alph*( -tr_cd2_phi_new + trk*lKphi &                        
                                        + lphi*(lKphi*lKphi - ww*ww*tr_dphi_dphi &
                                        + 2.0d0*pi*src_trT*B_DEF/Bphi + mass_phi*mass_phi*Bphi))
-                         end if 
+                        end if 
                     end if 
 
                         rhs_phi(i,j,k) = rhs_lphi
