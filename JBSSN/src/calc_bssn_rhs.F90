@@ -27,6 +27,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
   ! Scalar field
   CCTK_REAL                lphi, lKphi, Bphi, BKphi, lphi2
+  CCTK_REAL                lphi_delta, lphi_delta2, delta_p
   CCTK_REAL                d1_lphi(3), d1_lKphi(3)
   CCTK_REAL                omega_Bphi, domega_Bphi, F_phi
   CCTK_REAL                d2_lphi(3,3), cd2_lphi(3,3), cW_dphi(3,3) 
@@ -127,7 +128,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   evolve_beta   = CCTK_EQUALS(shift_evolution_method, "JBSSN")
   evolve_scalar = CCTK_EQUALS(scalar_evolution_method, "JBSSN")
   evolve_Jordan = CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BDold")
-  JordanFrame   = CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BD") .OR. evolve_Jordan 
+  JordanFrame   = CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BD") .OR. evolve_Jordan .OR. CCTK_EQUALS(theory,"full")
 
   call CCTK_IsFunctionAliased(istat, "MultiPatch_GetDomainSpecification")
   if (istat == 0) then
@@ -193,8 +194,8 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   !$OMP PARALLEL DO COLLAPSE(3) &
   !$OMP PRIVATE( i, j, k, di, dj, dk, nx,ny,nz,  &
   !$OMP ww, hh, trk, aa, gammat, alph, beta, Tab, dethh, hu, beta_l, &
-  !$OMP lphi, lKphi, Bphi, BKphi, omega_Bphi, domega_Bphi, F_phi, lphi2,&
-  !$OMP trk_omega, trk_phi, trk_mass, aa_omega, aa_phi, gammat_omega, gammat_phi,&
+  !$OMP lphi, lKphi, Bphi, BKphi, omega_Bphi, domega_Bphi, F_phi, lphi2, lphi_delta, lphi_delta2,&
+  !$OMP trk_omega, trk_phi, trk_mass, aa_omega, aa_phi, gammat_omega, gammat_phi, delta_p,&
   !$OMP d1_lphi, d1_lKphi, d2_lphi, cd2_lphi, cW_dphi, tr_cd2_phi_new, &
   !$OMP d1_beta1, d1_beta2, d1_beta3, &
   !$OMP d1_hh11, d1_hh12, d1_hh13, d1_hh22, d1_hh23, d1_hh33, &
@@ -711,6 +712,15 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     ! omega     = 1/(2*k0**2) -3/2 
     ! d1_omega  = 0   ! omega is constant
     !
+    ! For DEF+BD
+    ! Bphi      = exp(varphi*varphi/2+delta*varphi)
+    ! BKphi     = Bphi * (varphi+delta) * Kphi
+    ! d1_Bphi   = Bphi * (varphi+delta) * d1_phi
+    ! cd2_Bphi   = Bphi * (1 + (varphi+delta)^2 ) * d1_varphi * d1_varphi + (varphi+delta) * Bphi * covD_phi
+    ! d1_BKphi  = Bphi*Kphi * (1 + (varphi+delta)^2) * d1_varphi + (varphi+delta) * Bphi * d1_Kphi
+    ! omega     = 2/(B * (varphi+delta)**2) -3/2 
+    ! d1_omega  = -4/(B*Bphi * (varphi+delta)^4)
+    !
 
     if (evolve_scalar) then      ! Begin evolveScalar
        if (CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"BD")  .OR.  CCTK_EQUALS(theory,"onlymetric") ) then                       !---define BD
@@ -727,6 +737,16 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                omega_Bphi  = 2.0d0/(B_DEF*lphi2)-3.0d0/2.0d0
                domega_Bphi = -4.0d0/(B_DEF*lphi2*lphi2*Bphi)               
        end if                                                   ! -- end define DEF
+
+       if (CCTK_EQUALS(theory,"full") ) then                      !--- Define DEF+BD
+               delta_p     = -2*k0BD/sqrt(B_DEF)               
+               lphi_delta  = lphi+delta_p
+               lphi_delta2 = lphi_delta*lphi_delta
+               Bphi        = exp(lphi2/2.0d0+delta_p*lphi)
+               BKphi       = Bphi*lphi_delta*lKphi               
+               omega_Bphi  = 2.0d0/(B_DEF*lphi_delta2)-3.0d0/2.0d0
+               domega_Bphi = -4.0d0/(B_DEF*lphi_delta2*lphi_delta2*Bphi)               
+       end if                                                   ! -- end define DEF+BD
 
             !---- Calculate traces             
 
@@ -1056,7 +1076,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        
                src_trT = srcS_ww2 * ww*ww - srcE
                
-                    if (r(i,j,k)==r_debug ) THEN
+                    if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
                     write(*,*) "------ Matter terms----------------"
                     write(*,*) "r = ", r_debug
                     write(*,*) "Tab", Tab 
@@ -1098,11 +1118,11 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                  
 
                     if ( CCTK_EQUALS(theory,"DEF") ) then   ! init DEF
-                         F_phi = 2.0d0*pi*B_DEF*src_trT*lphi2/Bphi  +  ww*ww* tr_dphi_dphi - lKphi*lKphi
+                         F_phi = 2.0d0*pi*B_DEF*src_trT*lphi2/Bphi  +  ww*ww* tr_dphi_dphi - lKphi*lKphi + mass_phi*mass_phi*lphi2*Bphi
                          
                          trk_omega = omega_Bphi*lKphi*lKphi*lphi2 
                          trk_phi   = ww*ww*(lphi*tr_cd2_phi+(1.0d0+lphi2)*tr_dphi_dphi) - lphi*ww*tr_dww_dphi - trk*lphi*lKphi -1.5d0*F_phi 
-                         trk_mass  = (1.5d0+1.0d0/B_DEF)*mass_phi*mass_phi*lphi2*Bphi 
+                         trk_mass  = (1.0d0/B_DEF)*mass_phi*mass_phi*lphi2*Bphi 
 
                          gammat_phi   = 0.0d0
                          gammat_omega = 0.0d0
@@ -1119,11 +1139,33 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                           end do
                     end if  !end DEF
 
+                    if ( CCTK_EQUALS(theory,"full") ) then   ! init DEF+BD
+                         F_phi = 2.0d0*pi*B_DEF*src_trT*lphi_delta2/Bphi  +  ww*ww* tr_dphi_dphi - lKphi*lKphi
+                         
+                         trk_omega = omega_Bphi*lKphi*lKphi*lphi_delta2 
+                         trk_phi   = ww*ww*(lphi_delta*tr_cd2_phi+(1.0d0+lphi_delta2)*tr_dphi_dphi) - lphi_delta*ww*tr_dww_dphi - trk*lphi_delta*lKphi -1.5d0*F_phi 
+                         trk_mass  = (1.5d0+1.0d0/B_DEF)*mass_phi*mass_phi*lphi_delta2*Bphi 
+
+                         gammat_phi   = 0.0d0
+                         gammat_omega = 0.0d0
+                         do a=1,3
+                           do b=1,3
+                            aa_omega(a,b)   = lphi_delta2*d1_lphi(a)*d1_lphi(b) - lphi_delta2*tr_dphi_dphi * hh(a,b)/3.0d0 
+                            aa_phi(a,b)     = ww*ww*( d1_lphi(a)*d1_lphi(b)*(lphi_delta2+1.0d0) + lphi_delta *(cd2_lphi(a,b) + cW_dphi(a,b)) ) - aa(a,b)*lKphi*lphi_delta 
+                            aa_phi(a,b)     = aa_phi(a,b) - ww*hh(a,b)*( ww*(lphi_delta2+1.0d0)*tr_dphi_dphi  + lphi_delta*(ww*tr_cd2_phi - tr_dww_dphi) )/3.0d0   ! take trace
+                                
+                            !Need to check this next step                            
+                            gammat_omega(a) = gammat_omega(a) + (1.0d0+2.0d0/B_DEF-lphi_delta2/2.0d0) * lKphi * hu(a,b)*d1_lphi(b) 
+                            gammat_phi(a)   = gammat_phi(a) + hu(a,b)*(lphi_delta*d1_lKphi(b) - trk * d1_lphi(b)*lphi_delta/3.0d0) -  au(a,b)*d1_lphi(b)*lphi_delta
+                            end do
+                          end do
+                    end if  !end full DEF+BD
+
                 end if                   !--- End JordanFranme 
 
 
                 ! DEBUG
-                    if (r(i,j,k)==r_debug) THEN
+                    if (r(i,j,k)==r_debug .AND. show_debug/=0) THEN
                     write(*,*) "---------------------------" 
                     write(*,*) "r = ", r(i,j,k)
                     if(JordanFrame) then  ! begin evolve Jordan
@@ -1307,7 +1349,14 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                                        + lphi*(lKphi*lKphi - ww*ww*tr_dphi_dphi &
                                        + 2.0d0*pi*src_trT*B_DEF/Bphi + mass_phi*mass_phi*Bphi))
                         end if 
-                    end if 
+                end if              ! end DEF 
+                    
+                    if (CCTK_EQUALS(theory,"full") ) then  ! add coupling term if full                   
+                        rhs_lKphi = rhs_lKphi - alph*tr_cd2_phi_new &
+                               + alph*trk*lKphi -ww*ww*tr_dalp_dphi &
+                               + alph*lphi_delta*(lKphi*lKphi - ww*ww*tr_dphi_dphi) &
+                               + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi                
+                    end if      ! end full
 
                         rhs_phi(i,j,k) = rhs_lphi
 
@@ -1325,6 +1374,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "coupling ", 2.0d0*alph*pi*src_trT*B_DEF*lphi/Bphi !8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
                     write(*,*) "tr_dww_dphi", tr_dww_dphi
                     write(*,*) "beta" , beta
+                    write(*,*) "mass term ", alph*lphi*mass_phi*mass_phi*Bphi
                     write(*,*) "beta locl" , beta_l
                     write(*,*) "alpha", alph
                     write(*,*) "ww", ww
@@ -1415,7 +1465,7 @@ subroutine JBSSN_calc_bssn_rhs_bdry( CCTK_ARGUMENTS )
              phi0  = 1.0
              kphi0 = Kphi1_0
      end if
-     if (CCTK_EQUALS(theory, "onlySF") .OR. CCTK_EQUALS(theory,"BDold") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF")) then             
+     if (CCTK_EQUALS(theory, "onlySF") .OR. CCTK_EQUALS(theory,"full") .OR. CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BD") .OR. CCTK_EQUALS(theory,"DEF")) then             
              phi0  = phi_at_inf
              kphi0 = Kphi1_0
      end if
