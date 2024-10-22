@@ -71,7 +71,8 @@ KEYWORD theory "choose theory"
   "onlymetric"      :: "BD theory, only metric"
   "GR"		    :: "no scalar field, pure GR" 
   "DEFold"	    :: "DEF theory, Phi = exp(phi**2), not tested"
-  "BDold"           :: "BD theory, Phi = exp(phi), not tested"  
+  "BDold"           :: "BD theory, Phi = exp(phi), not tested" 
+  "full"	    :: "DEF+BD enhancement" 
 } "GR"
 
 CCTK_REAL phi_at_inf "value of phi at infinity"
@@ -105,6 +106,10 @@ CCTK_REAL mass_phi "mass of scalar field"
  0:*
 } 0.0d0
 
+CCTK_REAL delta_phi "linear coupling parameter -alpha*sqrt(2/-beta)"
+{
+ *:*
+} 0.0d0
 
 private:
 
