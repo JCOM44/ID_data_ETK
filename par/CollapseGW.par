@@ -14,7 +14,7 @@ ActiveThorns = "CarpetIOASCII CarpetIOScalar CarpetIOHDF5 CarpetIOBasic IOUtil"	
 ActiveThorns = "ScalarBase ScalarInit JBSSN"							# Modified Scalar Jordan evolution
 ActiveThorns = "NaNChecker TerminationTrigger"							# Quality control
 ActiveThorns = "NPScalars SphericalSurface WeylScal4 Multipole QuasiLocalMeasures" 			# GW extraction 
-
+ActiveThorns = "Hydro_Analysis ADMMass"
 
 ###########################################################
 #####################   grid parameters   #################
@@ -221,9 +221,10 @@ JBSSN::calculate_constraints		= yes
 
 
 ScalarBase::scalar_evolution_method		= "JBSSN"
-JBSSN::theory				= "DEF"
-JBSSN::k0BD				= 0.0
-JBSSN::B_DEF				= 9.0
+JBSSN::theory				= "BD"
+JBSSN::k0BD				= 0.1
+JBSSN::B_DEF				= 0.0
+JBSSN::mass_phi				= 1.0e-2
 JBSSN::phi_at_inf				= 1.0e-5
 JBSSN::show_debug				= "yes"
 
@@ -244,7 +245,7 @@ ADMBase::initial_dtlapse        = "zero"
 ADMBase::initial_dtshift        = "zero"
 
 Hydro_rnsid::rotation_type 	= "uniform"
-Hydro_rnsid::axes_ratio 	= 0.95
+Hydro_rnsid::axes_ratio 	= 0.75
 
 # rho_central 
 # BD
@@ -262,17 +263,14 @@ Hydro_rnsid::RNS_Gamma 		= 2.0
 Hydro_rnsid::RNS_K 		= 100.0
 Hydro_rnsid::save_2Dmodel 	= "no"
 Hydro_rnsid::recover_2Dmodel	= "yes"
-Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEF_B--4.5_ax-0.95_coll.h5"
+Hydro_rnsid::model2D_file	= "/home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK/hydro_k0-0.1_ax-0.75_mass-1.0e-02_coll.h5"
 
 ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
-ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEF_B--4.5_ax-0.95_coll.h5" 
+ScalarBase::n_phi1		= 3
+ScalarInit::SFmodel_file	= "/home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK/phi_k0-0.1_ax-0.75_mass-1.0e-02_coll.h5" 
 ScalarInit::set_const_scalar	= "no"
 ScalarInit::reflect_scalar	= "no"
-
-#File directory:
-# zwicky: /home/jolivera/ET_files/ID_data_ETK
-# binac: /home/tu/tu_tu/tu_pelol01/ET_git/ID_data_ETK
 
 
 ###########################################################
@@ -403,6 +401,24 @@ Multipole::variables	= "
 "
 Multipole::l_max	= 6
 
+############################
+######### Hydro analysis 
+############################
+
+Hydro_Analysis::restmass_compute_masses  = "yes"                                Hydro_Analysis::Hydro_stencil            = 3                                    
+Hydro_Analysis::restmass_rho_min         = 1.e-10
+Hydro_Analysis::restmass_masses_nr       = 4
+Hydro_analysis::restmass_ref_radius_mass[0] = 20
+Hydro_analysis::restmass_ref_radius_mass[1] = 11
+Hydro_analysis::restmass_ref_radius_mass[2] = 5
+Hydro_analysis::restmass_ref_radius_mass[3] = 2
+
+         
+admmass::admmass_surface_distance[0]     = 200 
+admmass::admmass_use_all_volume_as_volume_radius = no
+admmass::admmass_use_surface_distance_as_volume_radius = no
+admmass::admmass_volume_radius[0]        = 240
+
 ###########################################################
 ################# Mask parameters  ########################
 ###########################################################
@@ -532,6 +548,8 @@ SphericalSurface::sf_info
 SphericalSurface::sf_radius
 SphericalSurface::sf_origin
 SphericalSurface::sf_coordinate_descriptors
+Hydro_Analysis::Hydro_Analysis_masses
+admmass::admmass_masses
 "
 
 IOASCII::out1D_every     = 512
@@ -598,7 +616,7 @@ TerminationTrigger::termination_from_file   = "yes"
 CarpetIOHDF5::checkpoint                    = "yes"
 IOUtil::checkpoint_dir                  = "output_directory/checkpoints"
 IOUtil::checkpoint_every_walltime_hours = 12
-IOUtil::checkpoint_keep                 = 1
+IOUtil::checkpoint_keep                 = 2
 IOUtil::checkpoint_on_terminate         = "yes" #"yes"
 IOUtil::out_dir                         = "output_directory"
 IOUtil::out_fileinfo                    = "none"
