@@ -1104,7 +1104,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
                         trk_omega = omega_Bphi*lKphi*lKphi 
                         trk_phi   = ww*ww*(tr_cd2_phi+tr_dphi_dphi) - ww*tr_dww_dphi - trk*lKphi -1.5d0*F_phi                                                
-                        trk_mass  = (1.0d0/(k0BD*k0BD))*mass_phi*mass_phi*lphi2*Bphi 
+                        trk_mass  = (1.0d0/(2.0d0*k0BD*k0BD))*mass_phi*mass_phi*lphi2*Bphi 
 
                         gammat_phi   = 0.0d0
                         gammat_omega = 0.0d0
@@ -1234,12 +1234,12 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     rhs_gammatz(i,j,k) = rhs_gammat(3)
 
 !    if(CCTK_EQUALS(theory,"onlymetric")) then        
-     rhs_tracek(i,j,k) = 0.0
-!    rhs_axy(i,j,k) = 0.0
-!    rhs_axz(i,j,k) = 0.0
-!    rhs_ayy(i,j,k) = 0.0
-!    rhs_ayz(i,j,k) = 0.0
-!    rhs_azz(i,j,k) = 0.0
+!           rhs_tracek(i,j,k) = 0.0
+!           rhs_axy(i,j,k)    = 0.0
+!           rhs_axz(i,j,k)    = 0.0
+!           rhs_ayy(i,j,k)    = 0.0
+!           rhs_ayz(i,j,k)    = 0.0
+!           rhs_azz(i,j,k)    = 0.0
 !    end if
 
     if (cowling) then
@@ -1320,7 +1320,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_phi(i,j,k) = rhs_lphi
                    rhs_lKphi = rhs_lKphi - 0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
                    rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
-                   rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD + betaDEF*lphi)     
+                   rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD - sqrt(-betaDEF)* tanh(sqrt(-betaDEF) *lphi)  ) !+betaDEF*lphi)     
                    rhs_lKphi = rhs_lKphi + 0.5d0 * alph * lphi * mass_phi*mass_phi                
                    rhs_Kphi(i,j,k) = rhs_lKphi
            end if
@@ -1389,10 +1389,9 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "tr_cd2_phi_new ", tr_cd2_phi_new
                     write(*,*) "trace term ", -alph*tr_cd2_phi_new
                     write(*,*) "coupling ", 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi  !2.0d0*alph*pi*src_trT*B_DEF*lphi/Bphi !8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
-                    write(*,*) "coup+trace ", -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi 
-                    write(*,*) "tr_dww_dphi", tr_dww_dphi
-                    write(*,*) "beta" , beta
+                    write(*,*) "coup+trace ", -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi                     
                     write(*,*) "mass term ", alph*lphi*mass_phi*mass_phi*Bphi
+                    write(*,*) "coup+trace+mass",  -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi + alph*lphi*mass_phi*mass_phi*Bphi
                     write(*,*) "beta locl" , beta_l
                     write(*,*) "alpha", alph
                     write(*,*) "ww", ww
