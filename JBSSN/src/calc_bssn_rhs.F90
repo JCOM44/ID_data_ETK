@@ -1320,7 +1320,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                    rhs_phi(i,j,k) = rhs_lphi
                    rhs_lKphi = rhs_lKphi - 0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
                    rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
-                   rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD - sqrt(-betaDEF)* tanh(sqrt(-betaDEF) *lphi)  ) !+betaDEF*lphi)     
+                   rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD - sqrt(-betaDEF)* tanh(sqrt(-betaDEF)/5.0 *lphi)  ) !+betaDEF*lphi)     
                    rhs_lKphi = rhs_lKphi + 0.5d0 * alph * lphi * mass_phi*mass_phi                
                    rhs_Kphi(i,j,k) = rhs_lKphi
            end if
