@@ -127,9 +127,21 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
   evolve_alp    = CCTK_EQUALS(lapse_evolution_method, "JBSSN")
   evolve_beta   = CCTK_EQUALS(shift_evolution_method, "JBSSN")
   evolve_scalar = CCTK_EQUALS(scalar_evolution_method, "JBSSN")
-  evolve_Jordan = CCTK_EQUALS(theory,"DEFold") .OR. CCTK_EQUALS(theory,"BDold")
-  JordanFrame   = CCTK_EQUALS(theory,"DEF") .OR. CCTK_EQUALS(theory,"BD") .OR. evolve_Jordan .OR. CCTK_EQUALS(theory,"full")
-  cowling       = CCTK_EQUALS(theory,"onlySF") .OR. CCTK_EQUALS(theory,"BDdecouplingEF") .OR. CCTK_EQUALS(theory,"DEFdecouplingEF")
+
+  evolve_Jordan = CCTK_EQUALS(theory,"DEFold") &
+             .OR. CCTK_EQUALS(theory,"BDold")
+
+  ! Full evolution in Jordan frame     
+  JordanFrame   = CCTK_EQUALS(theory,"DEF") &
+             .OR. CCTK_EQUALS(theory,"BD")  &
+             .OR. evolve_Jordan             &
+             .OR. CCTK_EQUALS(theory,"full")
+
+  ! Cowling approx. metric is not evolved   
+  cowling       = CCTK_EQUALS(theory,"onlySF")          & 
+             .OR. CCTK_EQUALS(theory,"BDdecouplingEF")  &
+             .OR. CCTK_EQUALS(theory,"DEFdecouplingEF") & 
+             .OR. CCTK_EQUALS(theory,"DEFcosh")
 
   call CCTK_IsFunctionAliased(istat, "MultiPatch_GetDomainSpecification")
   if (istat == 0) then
@@ -1104,7 +1116,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
                         trk_omega = omega_Bphi*lKphi*lKphi 
                         trk_phi   = ww*ww*(tr_cd2_phi+tr_dphi_dphi) - ww*tr_dww_dphi - trk*lKphi -1.5d0*F_phi                                                
-                        trk_mass  = (1.0d0/(2.0d0*k0BD*k0BD))*mass_phi*mass_phi*lphi2*Bphi 
+                        trk_mass  = (1.0d0/(4.0d0*k0BD*k0BD))*mass_phi*mass_phi*lphi2*Bphi 
 
                         gammat_phi   = 0.0d0
                         gammat_omega = 0.0d0
@@ -1315,12 +1327,23 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
 
            ! Add source to scalar field
 ! --- Equations in Einstein frame
-           if (CCTK_EQUALS(theory,"BDdecouplingEF") .OR. CCTK_EQUALS(theory,"DEFdecouplingEF") ) then
+           if (CCTK_EQUALS(theory,"BDdecouplingEF") .OR. &
+               CCTK_EQUALS(theory,"DEFdecouplingEF").OR. &
+               CCTK_EQUALS(theory,"DEFcosh") )       then
+
                    rhs_lphi  = rhs_lphi-2.0d0 * alph * lKphi
                    rhs_phi(i,j,k) = rhs_lphi
                    rhs_lKphi = rhs_lKphi - 0.5d0 * alph * ww * ( ww*tr_cd2_phi - tr_dww_dphi)
-                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi                   
-                   rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD - sqrt(-betaDEF)* tanh(sqrt(-betaDEF)/5.0 *lphi)  ) !+betaDEF*lphi)     
+                   rhs_lKphi = rhs_lKphi + alph*trk*lKphi -0.5d0*ww*ww*tr_dalp_dphi 
+                                     
+                   if (CCTK_EQUALS(theory,"BDdecouplingEF"))  & 
+                       rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*k0BD 
+                  
+                   if (CCTK_EQUALS(theory,"DEFdecouplingEF")) & 
+                       rhs_lKphi = rhs_lKphi - 2*pi*alph*src_trT*(k0BD - sqrt(-betaDEF) * tanh(sqrt(-betaDEF)/1.02 *lphi) ) !+betaDEF*lphi)     
+                   if (CCTK_EQUALS(theory,"DEFcosh"))         &
+                       rhs_lKphi = rhs_lKphi + 2*pi*alph*(-1.2375e-3)*( sqrt(-betaDEF) * tanh(sqrt(-betaDEF)/1.02 *lphi) )    
+
                    rhs_lKphi = rhs_lKphi + 0.5d0 * alph * lphi * mass_phi*mass_phi                
                    rhs_Kphi(i,j,k) = rhs_lKphi
            end if
