@@ -1,0 +1,23 @@
+# Interface definition for thorn ScalarBase
+# $Header:$
+
+implements: ScalarBase
+inherits: Grid
+
+public:
+
+CCTK_REAL phi type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=0'
+{
+  phi1 
+} "scalar fields"
+
+CCTK_REAL Kphi type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=0'
+{
+  Kphi1 
+} "their conjugated momenta"
+
+CCTK_REAL Fext type=gf timelevels=3 tags='tensortypealias="Scalar" tensorweight=0'
+{
+  Fext1 Fext2
+} "scalar field external forcing function"
+
