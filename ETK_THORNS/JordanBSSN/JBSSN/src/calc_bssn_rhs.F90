@@ -708,6 +708,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     !------------ Scalar field terms ----------
     ! First we transform from phi -> varphi 
     ! For DEF
+    ! varphi    = sqrt(-2*beta ) *phi^EJ 
     ! Bphi      = exp(varphi*varphi/2)
     ! BKphi     = Bphi * varphi * Kphi
     ! d1_Bphi   = Bphi * varphi * d1_phi
@@ -718,6 +719,8 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     ! U(Bphi)   = 2/B m^2 Bphi^2 varphi^2
     !
     ! For BD 
+    ! varphi    = -2*alpha*phi^EF
+    ! Bphi      = exp(varphi*varphi/2)
     ! Bphi      = exp(varphi)
     ! BKphi     = Bphi*Kphi
     ! d1_Bphi   = Bphi* d_phi
@@ -729,6 +732,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
     !
     ! For DEF+BD
     ! Bphi      = exp(varphi*varphi/2+delta*varphi)
+    ! varphi    = sqrt(-2*beta ) *phi^EJ 
     ! BKphi     = Bphi * (varphi+delta) * Kphi
     ! d1_Bphi   = Bphi * (varphi+delta) * d1_phi
     ! cd2_Bphi   = Bphi * (1 + (varphi+delta)^2 ) * d1_varphi * d1_varphi + (varphi+delta) * Bphi * covD_phi
@@ -1187,6 +1191,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     if(JordanFrame) then  ! begin evolve Jordan
                             write(*,*) "trk_omega ", trk_omega 
                             write(*,*) "trk_phi ", trk_phi
+                            write(*,*) "trk_mass ", trk_mass
                             write(*,*) "F_phi", F_phi
                             write(*,*) "aa_omega ", aa_omega
                             write(*,*) "aa_phi ", aa_phi
@@ -1411,10 +1416,22 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "r =,", r_debug                    
                     write(*,*) "tr_cd2_phi_new ", tr_cd2_phi_new
                     write(*,*) "trace term ", -alph*tr_cd2_phi_new
-                    write(*,*) "coupling ", 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi  !2.0d0*alph*pi*src_trT*B_DEF*lphi/Bphi !8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
-                    write(*,*) "coup+trace ", -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi                     
-                    write(*,*) "mass term ", alph*lphi*mass_phi*mass_phi*Bphi
-                    write(*,*) "coup+trace+mass",  -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi + alph*lphi*mass_phi*mass_phi*Bphi
+                    if (CCTK_EQUALS(theory,"full") ) then
+                        write(*,*) "coupling full ", 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi   
+                        write(*,*) "coup+trace ", -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi                     
+                        write(*,*) "coup+trace+mass",  -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi_delta/Bphi + alph*lphi*mass_phi*mass_phi*Bphi
+                    end if 
+                    if (CCTK_EQUALS(theory,"DEF") )  then   
+                        write(*,*) "coupling DEF ", 2.0d0*alph*pi*src_trT*B_DEF*lphi/Bphi 
+                        write(*,*) "coup+trace ", -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi/Bphi                     
+                        write(*,*) "coup+trace+mass",  -alph*tr_cd2_phi_new + 2.0d0*pi*alph*src_trT*B_DEF*lphi/Bphi + alph*lphi*mass_phi*mass_phi*Bphi
+                    end if 
+                    if (CCTK_EQUALS(theory,"BD") )  then   
+                        write(*,*) "coupling BD ", 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi
+                        write(*,*) "coup+trace ", -alph*tr_cd2_phi_new + 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi                     
+                        write(*,*) "coup+trace+mass",  -alph*tr_cd2_phi_new + 8*pi*alph*src_trT*(k0BD*k0BD)/Bphi + alph*lphi*mass_phi*mass_phi*Bphi
+                    end if 
+                    write(*,*) "mass term ", alph*lphi*mass_phi*mass_phi*Bphi                    
                     write(*,*) "beta locl" , beta_l
                     write(*,*) "alpha", alph
                     write(*,*) "ww", ww

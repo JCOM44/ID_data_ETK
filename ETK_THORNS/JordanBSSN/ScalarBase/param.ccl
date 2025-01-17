@@ -1,0 +1,109 @@
+# Parameter definitions for thorn ScalarBase
+
+restricted:
+
+KEYWORD scalar_evolution_method "scalar variables evolution method"
+{
+  "none" :: "scalar variables are not evolved"
+} "none"
+
+KEYWORD initial_scalar "initial data for scalar variables"
+{
+  "none" :: "scalar variables are not initialized"
+} "none"
+
+# considering a potential of the form
+# V = mu^2 |phi|^2 (1 - 2 lambda |phi|^2)^2
+CCTK_REAL V_lambda "interaction term in the potential"
+{
+  *:*           :: ""
+} 0
+
+CCTK_REAL mu "mass of the scalar fields"
+{
+  0:*           :: "any non-negative number"
+} 0
+
+
+CCTK_INT n_phi1 "n power of outgoing boundary r^n fall off rate for phi1"
+{
+  0:4           :: "??"
+} 1
+
+CCTK_INT n_phi2 "n power of outgoing boundary r^n fall off rate for phi2"
+{
+  0:4           :: "??"
+} 1
+
+CCTK_REAL phi1_0 "asymptotic value for phi1"
+{
+  *:*           :: ""
+} 0
+
+CCTK_REAL phi2_0 "asymptotic value for phi2"
+{
+  *:*           :: ""
+} 0
+
+
+CCTK_INT n_Kphi1 "n power of outgoing boundary r^n fall off rate for Kphi1"
+{
+  0:4           :: "??"
+} 2
+
+CCTK_INT n_Kphi2 "n power of outgoing boundary r^n fall off rate for Kphi2"
+{
+  0:4           :: "??"
+} 2
+
+
+CCTK_REAL Kphi1_0 "asymptotic value for Kphi1"
+{
+  *:*           :: ""
+} 0
+
+CCTK_REAL Kphi2_0 "asymptotic value for Kphi2"
+{
+  *:*           :: ""
+} 0
+
+### parameters for external forcing configuration
+
+BOOLEAN forcing_switch  "add external forcing to the rhs of Klein-Gordon"
+{
+} "no"
+
+CCTK_REAL ampEF  "amplitude of external forcing"
+{
+  *:*  :: "Any value possible"
+} 1.0
+
+CCTK_REAL rEF  "peak position of external forcing"
+{
+  0:*  :: "Any positive value"
+} 10.0
+
+CCTK_REAL widthEF  "width of external forcing"
+{
+  0:*  :: "Any positive value"
+} 10.0
+
+CCTK_REAl omegaEF  "oscillation frequency of external forcing"
+{
+  0:*  :: "Any positive value"
+} 0.0
+
+CCTK_INT lEF  ""
+{
+  0:2 :: "angular multipoles implemented are l = m = 0,1,2"
+} 0
+
+CCTK_INT mEF  ""
+{
+  0:2 :: "angular multipoles implemented are l = m = 0,1,2"
+} 0
+
+CCTK_REAL eps_r "of value if rr approaches zero in densities computation"
+{
+  0:*   :: "any small positive value possible"
+} 1.0d-06

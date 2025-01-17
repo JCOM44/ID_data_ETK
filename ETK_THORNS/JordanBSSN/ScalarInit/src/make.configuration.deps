@@ -1,0 +1,5 @@
+# make.configuration.deps file for thorn ScalarInit
+
+SCALARINIT_CFLAGS =  $(HDF5_INC_DIRS:%=-I%)
+
+
