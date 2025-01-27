@@ -1,4 +1,0 @@
-# make.configuration.defn for GRHydro
-
-# add the utilities to the list
-ALL_UTILS += Riemann1d
