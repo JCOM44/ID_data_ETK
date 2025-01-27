@@ -1164,7 +1164,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                          
                          trk_omega = omega_Bphi*lKphi*lKphi*lphi_delta2 
                          trk_phi   = ww*ww*(lphi_delta*tr_cd2_phi+(1.0d0+lphi_delta2)*tr_dphi_dphi) - lphi_delta*ww*tr_dww_dphi - trk*lphi_delta*lKphi -1.5d0*F_phi 
-                         trk_mass  = (1.0d0/B_DEF)*mass_phi*mass_phi*lphi2*Bphi 
+                         trk_mass  = (1.0d0/B_DEF)*mass_phi*mass_phi*lphi2*Bphi ! Check this 
 
                          gammat_phi   = 0.0d0
                          gammat_omega = 0.0d0
@@ -1211,6 +1211,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
        rhs_trk    = rhs_trk    + pi4  * alph * (srcE + ww*ww * srcS_ww2) 
        rhs_aa     = rhs_aa     - pi8  * alph * ww*ww * srcSijTF
        rhs_gammat = rhs_gammat - pi16 * alph * srcji
+
         ! ---- add scalar field terms as source too
       if(JordanFrame .OR. CCTK_EQUALS(theory,"onlymetric")) then
        rhs_trk    = rhs_trk + alph*(  trk_omega + trk_phi - trk_mass)
@@ -1367,7 +1368,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
             if (JordanFrame .OR. CCTK_EQUALS(theory,"onlySF")) then  ! Begin Jordan Frame SF ev
                    rhs_lphi  = rhs_lphi- alph * lKphi
                                   
-                    
+!------  BD SF                    
                     if (CCTK_EQUALS(theory,"BD") ) then  ! add coupling term if BD
                         rhs_lKphi = rhs_lKphi - alph*tr_cd2_phi_new &
                                + alph*trk*lKphi -ww*ww*tr_dalp_dphi &
@@ -1375,7 +1376,8 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                                + 8.0d0*pi*alph*src_trT*(k0BD*k0BD)/Bphi &
                                + alph*lphi*mass_phi*mass_phi*Bphi                
                     end if 
-              
+
+!------ DEF SF
                     if (CCTK_EQUALS(theory,"DEF") ) then  ! add coupling if DEF
                             if (k_sum/=0) then  ! with summation compensation
                                 c_lKphi = 0.0d0
@@ -1393,7 +1395,8 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                                        + 2.0d0*pi*src_trT*B_DEF/Bphi)) + alph*lphi*mass_phi*mass_phi*Bphi
                              end if 
                     end if              ! end DEF 
-                    
+
+!------- full SF                    
                     if (CCTK_EQUALS(theory,"full") .OR. CCTK_EQUALS(theory,"onlySF") ) then  ! add coupling term if full                   
                         rhs_lKphi = rhs_lKphi - alph*tr_cd2_phi_new &
                                + alph*trk*lKphi -ww*ww*tr_dalp_dphi &
