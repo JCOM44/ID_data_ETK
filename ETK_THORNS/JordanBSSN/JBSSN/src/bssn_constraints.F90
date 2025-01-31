@@ -456,7 +456,7 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
 
            do m = 1, 3
             cd1_aa(a,b,l) = cd1_aa(a,b,l) - cf2(m,a,l) * aa(b,m) - cf2(m,b,l) * aa(a,m)
-           end do
+           end do  ! m
           end do   ! l
         end do     ! b
       end do       ! a 
@@ -583,8 +583,7 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
               tr_cd2_phi_new   = tr_cd2_phi_new   + hu(a,b) * (cd2_lphi(a,b)+cW_dphi(a,b) )*ww*ww              
               tr_dphi_dphi = tr_dphi_dphi + hu(a,b) * d1_lphi(a)*d1_lphi(b)
            end do           
-        end do
-        tr_cd2_phi_new = tr_cd2_phi_new * ww*ww         
+        end do       
         tr_dphi_dphi = tr_dphi_dphi*ww*ww
         
         !!! Choose theory
@@ -601,7 +600,7 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
             ham_phi =  0.5d0 * (1.0d0 /(k0BD*k0BD) - 3.0d0) * lKphi*lKphi
             ham_phi = ham_phi +  0.5d0 * ( 1.0d0/(k0BD*k0BD)+1.0d0) *tr_dphi_dphi
             ham_phi = ham_phi + 2.0d0*(-trk * lKphi + tr_cd2_phi_new)             
-            
+            ham_phi = ham_phi + 0.5d0 * mass_phi*mass_phi/(k0BD*k0BD) * Bphi * lphi2 
 
             do a=1,3
               do b=1,3
@@ -656,8 +655,8 @@ subroutine JBSSN_bssn_constraints( CCTK_ARGUMENTS )
             ham_phi =  (2.0d0 /B_DEF - 1.5d0*lphi_delta2) * lKphi*lKphi
             !ham_phi = ham_phi +  0.5d0 * (1.0d0 + 2.0d0/B_DEF - lphi2/2.0d0) *tr_dphi_dphi
             ham_phi = ham_phi +  (2.0d0 + 2.0d0/B_DEF + lphi_delta2/2.0d0) *tr_dphi_dphi
-            ham_phi = ham_phi + 2.0d0*lphi_delta2*(-trk * lKphi + tr_cd2_phi_new) 
-            ham_phi = ham_phi + 2.0d0 * mass_phi*mass_phi * lphi_delta2 *Bphi/B_DEF           
+            ham_phi = ham_phi + 2.0d0*lphi_delta*(-trk * lKphi + tr_cd2_phi_new) 
+            ham_phi = ham_phi + 2.0d0 * mass_phi*mass_phi * lphi2 *Bphi/B_DEF           
                        
             do a=1,3
               do b=1,3
@@ -732,8 +731,13 @@ end if  !! End evolveScalar
        srcjdi = (srcjdi - Tab(1:3,4)) / alph
 
        !------------ Correct source terms ---------
-       ham = ham - pi16 * srcE/Bphi
-       mom = mom - pi8  * srcjdi/Bphi
+       if (evolve_scalar) then      ! Begin evolveScalar
+          srcE   = srcE/Bphi
+          srcjdi = srcjdi/Bphi
+       end if 
+
+       ham = ham - pi16 * srcE
+       mom = mom - pi8  * srcjdi
 
     end if
 

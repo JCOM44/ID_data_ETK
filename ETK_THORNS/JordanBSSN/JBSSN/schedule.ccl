@@ -98,6 +98,18 @@ if (compute_rhs_at_initial) {
           {
             LANG: Fortran
           } "MoL boundary RHS calculation"
+      
+          if (mass_phi>0) {
+                schedule JBSSN_calc_sf_rhs_bdry_sph in MoL_PostStep \
+                AT POSTINITIAL as JBSSN_sf_CalcRHS_Bdry \
+                after JBSSN_CalcRHS
+                {
+                  LANG: Fortran
+                 } "MoL boundary Sf  RHS calculation"
+                          
+                          }
+	
+
         }
 
         if (z_is_radial) {
@@ -116,6 +128,14 @@ if (!z_is_radial) {
   {
     LANG: Fortran
   } "MoL boundary RHS calculation"
+
+  if (mass_phi>0) {
+          schedule JBSSN_calc_sf_rhs_bdry_sph in MoL_CalcRHS as JBSSN_sf_CalcRHS_Bdry \
+                  after JBSSN_CalcRHS
+                  {
+                    LANG: Fortran
+                   } "MoL boundary SF RHS calculation"          
+                  }
 }
 
 if (z_is_radial) {
