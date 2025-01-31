@@ -203,17 +203,17 @@ JBSSN::eta_beta				= 1
 JBSSN::conf_fac_floor			= 1.0d-04
 JBSSN::derivs_order			= 4
 JBSSN::use_advection_stencils		= yes
-JBSSN::calculate_constraints		= yes 
+JBSSN::calculate_constraints		= yes
 
 
 ScalarBase::scalar_evolution_method		= "JBSSN"
-JBSSN::theory				= "DEF"
-JBSSN::k0BD				= 0.0
+JBSSN::theory				= "full"
+JBSSN::k0BD				= 0.1
 JBSSN::B_DEF				= 10.0
 JBSSN::phi_at_inf				= 0.0 #1.0e-5
-JBSSN::mass_phi					= 7.0e-4 #0.0010692882499421484 #1.0e-4
-JBSSN::show_debug				= "yes"
-JBSSN::k_sum				= "yes"
+JBSSN::mass_phi					= 1.0e-2 #1.0678e-2 #-> 0.1   #5.339e-3 -> 0.8  
+JBSSN::show_debug				= "no"
+JBSSN::k_sum				= "no"
 ###########################################################
 #####################   initial data   ####################
 ###########################################################
@@ -231,7 +231,7 @@ ADMBase::initial_dtlapse        = "zero"
 ADMBase::initial_dtshift        = "zero"
 
 Hydro_rnsid::rotation_type 	= "uniform"
-Hydro_rnsid::axes_ratio 	= 0.8
+Hydro_rnsid::axes_ratio 	= 0.7
 
 # rho_central 
 # BD
@@ -243,7 +243,7 @@ Hydro_rnsid::axes_ratio 	= 0.8
 # for ax 0.95 : 3.2462112512e-3
 
 
-Hydro_rnsid::rho_central	= 0.0017082039325  #1.28e-3 #1.7082e-3
+Hydro_rnsid::rho_central	= 2.0e-3 #2.2801e-3 #1.28e-3 #1.7082e-3
 Hydro_rnsid::eos_type 		= "poly"
 #Hydro_rnsid::accuracy  = 1e-10
 Hydro_rnsid::RNS_Gamma 		= 2.0
@@ -251,13 +251,20 @@ Hydro_rnsid::RNS_K 		= 100.0
 Hydro_rnsid::save_2Dmodel 	= "no"
 Hydro_rnsid::recover_2Dmodel	= "yes"
 #Hydro_rnsid::eos_file	= "/home/jolivera/ET/newET/Cactus/arrangements/EinsteinInitialData/Hydro_RNSID/par/eos_files/SLypp"
-#Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/GR_0.7.h5"
-Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEF_B--5.0_ax-0.8_mass-7.0e-04.h5" 
+#Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEFBD-beta--5.0-k0-1e-1_ax-0.7.h5"
+Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEFBD-beta--5.0-k0-1e-1_ax-0.7_mass-1.0e-02.h5"
+#Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEF_B--5.0_m-5.0e-03.h5" 
+#Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_k0-0.001_m-5.0e-02.h5" 
 
 
 ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
-ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEF_B--5.0_ax-0.8_mass-7.0e-04.h5" 
+ScalarBase::n_phi1		= 3
+ScalarBase::n_Kphi1		= 1
+#ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_k0-0.001_m-5.0e-02.h5" 
+#ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEF_B--5.0_m-5.0e-03.h5" 
+#ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEFBD-beta--5.0-k0-1e-1_ax-0.7.h5" 
+ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEFBD-beta--5.0-k0-1e-1_ax-0.7_mass-1.0e-02.h5"
 ScalarInit::set_const_scalar	= "no"
 ScalarInit::reflect_scalar	= "no"
 #File directory:
@@ -269,7 +276,7 @@ ScalarInit::reflect_scalar	= "no"
 ################ Spatial finite differencing  #############
 ###########################################################
 
-Dissipation::epsdis = 0.5
+Dissipation::epsdis = 0.2
 Dissipation::order  = 5
 Dissipation::vars   = "
 #  ADMBase::lapse
@@ -409,6 +416,7 @@ IOHDF5::out2D_vars             = "
         ADMBase::shift
 	HydroBase::rho
  	ScalarBase::phi1
+	JBSSN::ham
 "
 
 
