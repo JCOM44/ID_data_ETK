@@ -219,12 +219,12 @@ JBSSN::calculate_constraints		= yes
 
 
 ScalarBase::scalar_evolution_method		= "JBSSN"
-JBSSN::theory				= "DEFdecouplingEF"
-JBSSN::k0BD				= 0.0
-JBSSN::B_DEF				= 0.0
-JBSSN::betaDEF				= -4.5
+JBSSN::theory				= "full"
+JBSSN::k0BD				= 0.1
+JBSSN::B_DEF				= 10.0
+JBSSN::betaDEF				= 0.0
 JBSSN::phi_at_inf				= 0.0 #1.0e-5
-JBSSN::mass_phi					= 0.0  #1.0678e-2 #-> 0.1   #5.339e-3 -> 0.8  
+JBSSN::mass_phi					= 1.0e-2  #1.0678e-2 #-> 0.1   #5.339e-3 -> 0.8  1
 JBSSN::show_debug				= "no"
 JBSSN::k_sum				= "no"
 ###########################################################
@@ -256,7 +256,7 @@ Hydro_rnsid::axes_ratio 	= 1.0
 # for ax 0.95 : 3.2462112512e-3
 
 
-Hydro_rnsid::rho_central	= 2.25e-3 #2.2801e-3 #1.28e-3 #1.7082e-3
+Hydro_rnsid::rho_central	= 1.6e-3 #2.2801e-3 #1.28e-3 #1.7082e-3
 Hydro_rnsid::eos_type 		= "poly"
 #Hydro_rnsid::accuracy  = 1e-10
 Hydro_rnsid::RNS_Gamma 		= 2.0
@@ -271,17 +271,17 @@ Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEF_B--5.
 
 #ScalarBase::initial_scalar      = ID_SF_Read2D
 ScalarBase::mu                  = 0.0
-ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEFBD.h5" 
+ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEF_B--4.3.h5" 
 
 ScalarBase::initial_scalar      = ID_SF_Gaussian
 ScalarInit::scalar_GaussProfile = single_mode
-ScalarInit::scalar_Initialize   = "zero_momentum" 
+ScalarInit::scalar_Initialize   = "zero_field" 
 ScalarInit::l0SF                = 0
 ScalarInit::m0SF                = 0
-ScalarInit::ampSF               = 1.0e-4
+ScalarInit::ampSF               = 1.0e-10
 ScalarInit::r0SF                = 18.0
 ScalarInit::widthSF             = 1.0
-
+#
 
 #File directory:
 # zwicky: /home/jolivera/ET_files/ID_data_ETK
@@ -292,7 +292,7 @@ ScalarInit::widthSF             = 1.0
 ################ Spatial finite differencing  #############
 ###########################################################
 
-Dissipation::epsdis = 0.0
+Dissipation::epsdis = 0.2
 Dissipation::order  = 5
 Dissipation::vars   = "
 #  ADMBase::lapse
@@ -382,7 +382,7 @@ IOBasic::outInfo_vars               = "HydroBase::rho ADMBase::lapse ScalarBase:
 
 IOScalar::outScalar_every = 0
 IOScalar::one_file_per_group = yes
-IOScalar::outScalar_reductions = "minimum maximum"
+IOScalar::outScalar_reductions = "minimum maximum norm2"
 IOScalar::outScalar_vars  = "
  HydroBase::rho
  HydroBase::press
