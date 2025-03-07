@@ -98,10 +98,5 @@ else if ( CCTK_Equals(initial_scalar, "ID_SF_Read2D" ))
   SCHEDULE ID_SF_Read2D IN ID_SF_Read2D_Group
   {
     LANG: C
-  } "Read scalar field initial data from a file"
-  
-  #SCHEDULE calculate_Kphi2 IN ID_SF_Read2D_Group AFTER ID_SF_Read2D
-  #{
-  #  LANG:C
-  #} "Calculate Kphi initial data"
+  } "Read scalar field initial data from a file" 
 }

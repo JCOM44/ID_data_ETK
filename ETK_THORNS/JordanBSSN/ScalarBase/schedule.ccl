@@ -1,7 +1,10 @@
 # Schedule definitions for thorn ScalarBase
 # $Header:$
 
+if (!CCTK_Equals(scalar_evolution_method, "none") )
+{
 STORAGE: phi[3] Kphi[3]
+
 
 schedule ScalarBase_symmetries at CCTK_WRAGH
 {
@@ -18,4 +21,6 @@ if (forcing_switch)
     } "writes external force grid function"
 
     STORAGE: Fext[3]
+}
+
 }

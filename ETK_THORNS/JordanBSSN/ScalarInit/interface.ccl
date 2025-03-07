@@ -2,7 +2,7 @@
 
 IMPLEMENTS: ScalarInit
 
-INHERITS: ScalarBase grid ADMBase 
+INHERITS: ScalarBase grid ADMBase Hydro_RNSID 
 
 PUBLIC:
 

@@ -1107,7 +1107,7 @@ subroutine JBSSN_calc_bssn_rhs( CCTK_ARGUMENTS )
                     write(*,*) "src_trT", src_trT
                     end if 
 
-! if Scalar field is present 
+                ! if Scalar field is present 
                if(JordanFrame .OR. CCTK_EQUALS(theory,"onlymetric")) then  ! begin evolve Jordan
                        !!! Normalize matter sources with the SF
                        srcE     = srcE/Bphi

@@ -219,13 +219,12 @@ ID_SF_Gauss (CCTK_ARGUMENTS)
 
      if ( CCTK_Equals ( scalar_Initialize , "zero_field") )
      {
-        phi1[ind]  = phi_at_inf;
+        phi1[ind]  =  0.00001; //phi_at_inf;
         /*phi2[ind]  = 0.0;*/
 
         Kphi1[ind] = psit_re;
 /*        Kphi2[ind] = psit_im;*/
      }
-
 
     /* -----------------------------------------------------------------------
 
