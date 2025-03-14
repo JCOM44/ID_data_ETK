@@ -135,12 +135,12 @@ JBSSN::calculate_constraints		= yes
 JBSSN::reset_dethh 			= yes 
 
 
-ScalarBase::scalar_evolution_method		= "none"
-JBSSN::theory				= "GR"
-JBSSN::k0BD				= 0.0
-JBSSN::B_DEF				= 0.0
+ScalarBase::scalar_evolution_method		= "JBSSN"
+JBSSN::theory				= "full"
+JBSSN::k0BD				= 0.001
+JBSSN::B_DEF				= 10.0
 JBSSN::phi_at_inf				= 0.0 #1.0e-5
-JBSSN::mass_phi					= 0.0 #1.0678e-2 #-> 0.1   #5.339e-3 -> 0.8  
+JBSSN::mass_phi					= 1.0e-2 #1.0678e-2 #-> 0.1   #5.339e-3 -> 0.8  
 JBSSN::show_debug				= "no"
 JBSSN::k_sum				= "no"
 
@@ -188,9 +188,8 @@ Hydro_rnsid::RNS_Gamma 		= 2.0
 Hydro_rnsid::RNS_K 		= 100.0
 Hydro_rnsid::save_2Dmodel 	= "no"
 
-Hydro_rnsid::recover_2Dmodel	= "no"
-Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEFBD-beta--0.001-k0-1e-3_mass-1.0e-02.h5"
-
+Hydro_rnsid::recover_2Dmodel	= "yes"
+Hydro_rnsid::model2D_file	= "/home/jolivera/ET_files/ID_data_ETK/hydro_DEFBD-beta--5.0-k0-1e-3_mass-1.0e-02.h5"
 
 ID_converter_ILGRMHD::Gamma_Initial = 2.0
 ID_converter_ILGRMHD::K_Initial     = 1.0
@@ -198,6 +197,8 @@ ID_converter_ILGRMHD::K_Initial     = 1.0
 IllinoisGRMHD::gamma_th=2.0
 IllinoisGRMHD::neos=1
 
+ScalarBase::initial_scalar      = ID_SF_Read2D
+ScalarInit::SFmodel_file	= "/home/jolivera/ET_files/ID_data_ETK/phi_DEFBD-beta--5.0-k0-1e-3_mass-1.0e-02.h5" 
 
 # I/O
 
@@ -213,13 +214,15 @@ IOUtil::recover_dir             = $parfile
 
 IOBasic::outInfo_every = 2
 #IOBasic::outInfo_vars  = "Carpet::physical_time_per_hour HydroBase::rho ML_BSSN::ML_Ham"
-IOBasic::outInfo_vars  = "Carpet::physical_time_per_hour IllinoisGRMHD::rho_b "
+IOBasic::outInfo_vars  = "Carpet::physical_time_per_hour IllinoisGRMHD::rho_b ScalarBase::phi1"
 
 IOScalar::outScalar_every    = 2
-CarpetIOScalar::outScalar_reductions = "maximum"
+CarpetIOScalar::outScalar_reductions = "maximum norm2"
 IOScalar::one_file_per_group = no
 IOScalar::outScalar_vars     = "
  IllinoisGRMHD::rho_b
+ JBSSN::ham 
+ ScalarBase::phi1
 "
 
 #CarpetIOASCII::out0D_every            = 2
@@ -227,15 +230,16 @@ IOScalar::outScalar_vars     = "
 #  Carpet::physical_time_per_hour
 #"
 
-IOASCII::out1D_every        = 128
+IOASCII::out1D_every        = 32
 IOASCII::one_file_per_group = yes
 IOASCII::output_symmetry_points = no
 IOASCII::out3D_ghosts           = no
 IOASCII::out3D_outer_ghosts     = no
 IOASCII::out1D_vars         = "
  IllinoisGRMHD::rho_b
- IllinoisGRMHD::psi6phi
- IllinoisGRMHD::Ax
- IllinoisGRMHD::Ay
- IllinoisGRMHD::Az
+ ScalarBase::phi1
+# IllinoisGRMHD::psi6phi
+# IllinoisGRMHD::Ax
+# IllinoisGRMHD::Ay
+# IllinoisGRMHD::Az
 "
