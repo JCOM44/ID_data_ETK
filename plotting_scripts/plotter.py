@@ -38,11 +38,16 @@ debug_on = 0
 old_format = 0
 
 
+#Define thorns 
 if re.search(r"imple",var_set):
-    var_list = ["rho","phi"]
-    thorn_list = ["hydrobase","scalarbase"]
+    var_list = ["rho","phi","ham"]
+    thorn_list = ["hydrobase","scalarbase","jbssn"]
 
-if re.search(r"ollaps",var_set):
+elif re.search(r"GR",var_set):
+    var_list = ["rho"]
+    thorn_list = ["hydrobase"]
+
+elif re.search(r"ollaps",var_set):
     var_list = ["rho","phi","lapse"]
     thorn_list = ["hydrobase","scalarbase","admbase"]
 
@@ -52,7 +57,6 @@ elif (debug_on ==1):
     thorn_list = ["scalarevolve","scalarevolve","scalarevolve"]
 
 else:
-#Define thorns 
     var_list = ["rho","phi","lapse","kphi","shift","ml_ham"]
     thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase","ml_admconstraints"]
 
@@ -70,7 +74,7 @@ for j in range(len(thorn_list)):
     for i in range(int(out_number)):
         
         if (old_format == 1):
-            outdir = sim_dir+sim_name+"/output-000"+str(i)+"/tovtest"
+            outdir = sim_dir+sim_name+"/output-000"+str(i)+f"/{sim_name}"
         else:
             outdir = sim_dir+sim_name+"/output-000"+str(i)+"/output_directory"
 	
@@ -80,10 +84,10 @@ for j in range(len(thorn_list)):
         print("Looking for simulation directory:", outdir)
 
         t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir,t0)
-        t_var_temp,var_temp=pinf.fx_timeseries(t1,x1,datax1)
-
-        t_var.extend(t_var_temp)
-        var.extend(var_temp)
+        if t0<t1[-1]:
+                t_var_temp,var_temp=pinf.fx_timeseries(t1,x1,datax1)
+                t_var.extend(t_var_temp)
+                var.extend(var_temp)
 
     os.chdir(plot_dir)
     if file_exist:
