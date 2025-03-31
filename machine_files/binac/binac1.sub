@@ -1,0 +1,15 @@
+#! /bin/bash
+#PBS -q @QUEUE@
+#PBS -r n
+#PBS -l walltime=@WALLTIME@
+#PBS -l nodes=@NODES@:ppn=@PPN@
+#PBS -l mem=@(2*@NUM_PROCS@*@NUM_THREADS@)@gb
+#PBS @('@CHAINED_JOB_ID@' ne '' ? '-W depend=afterany:@CHAINED_JOB_ID@' : '')@
+#PBS -V
+#PBS -N @SHORT_SIMULATION_NAME@
+#PBS -M @EMAIL@
+#PBS -m abe
+#PBS -v OMP_NUM_THREADS=@OMP_NUM_THREADS@
+
+cd @SOURCEDIR@
+@SIMFACTORY@ run @SIMULATION_NAME@ --machine=@MACHINE@ --restart-id=@RESTART_ID@ @FROM_RESTART_COMMAND@ > @RUNDIR@/@SIMULATION_NAME@.out 2> @RUNDIR@/@SIMULATION_NAME@.err
