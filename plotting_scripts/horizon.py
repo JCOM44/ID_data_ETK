@@ -16,7 +16,7 @@ M_to_density = c**5 / (G**3 * M_sol**2) # kg/m^3
 
 
 if len(sys.argv) < 4:
-    print("Usage: python3 horizon.py computer_name sim_name print_qlm")
+    print("Usage: python3 horizon.py computer_name sim_name pxrint_qlm")
     sys.exit(1)
 
 current_computer = sys.argv[1]
@@ -80,7 +80,11 @@ if dx:
 
 pinf.apply_second_xaxis(plt.gca())
 
+horizonfile = f"{saveplotdir}{sim_name}_horizon.txt"
 
+print(horizon.mean_radius)
+
+np.savetxt(horizonfile,np.column_stack((horizon.mean_radius)),fmt="%.13f")
 
 plt.savefig(f"{saveplotdir}horizon_{sim_name}.pdf")
 subprocess.run(f"git add plots/*",shell=True)

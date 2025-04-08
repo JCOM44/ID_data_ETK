@@ -18,19 +18,28 @@ M_to_ms = 1. / (1000 * M_sol * G / (c * c * c))
 M_to_density = c**5 / (G**3 * M_sol**2)  # kg/m^3
 
 
+################################################
+ # Set variables
+################################################
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 7 and len(sys.argv) > 5:
     print("Usage: python3 GW.py computer_name sim_name l_mode m_mode STT_phi? l_mode_STT m_mode_STT")
     sys.exit(1)
 
+
+out_number=3 # number of directories
 current_computer = sys.argv[1]
 sim_name = sys.argv[2]
 l_mode = int(sys.argv[3])
 m_mode = int(sys.argv[4])
-STT_phi = sys.argv[5]
-if STT_phi:
+STT_phi = False
+
+if len(sys.argv)>5:
+   STT_phi = sys.argv[5]
    l_mode_STT = sys.argv[6]
    m_mode_STT = sys.argv[7]
+else:
+   print("This is just GR")
 
 home_dir, sim_dir = pinf.IDcomputer(current_computer)
 dirGw= sim_dir + sim_name 
@@ -38,6 +47,11 @@ current_dir = os.getcwd()
 saveplotdir = current_dir+"/pdfplots/"
 savedatadir = current_dir+"/plots/"
 
+
+
+################################################
+# Extract GW
+################################################
 
 sim = sd.SimDir(dirGw)
 psi4 = sim.gws
@@ -59,10 +73,19 @@ for radius in r_values:
    print(f"Saving file as {dataf_name}")
    
    multipole = f"({l_mode},{m_mode})"
+# Calculate the difference8
+   t_var_adjusted = t_var - radius
+# Boolean mask to select only positive values of t_var - radius
+   positive_mask = t_var_adjusted > 0
+# Use the mask to filter the t_var and var arrays
+   t_var_filtered = t_var_adjusted[positive_mask]
+   var_filtered = var[positive_mask]
+
+# Plot only the positive values
 
    fig = plt.figure()
-   plt.plot(t_var, var,  label = fr"$\Psi_4^{multipole}$ Real Part at r ="+str(radius))
-   plt.xlabel(r"$t/M_{sun}$")
+   plt.plot(t_var_filtered,var_filtered,  label = fr"$\Psi_4^{multipole}$ Real Part at r ="+str(radius))
+   plt.xlabel(r"$t_{ret}[M]$")
    plt.ylabel(r"$\Psi_4$")
    plt.legend()
    pinf.apply_second_xaxis(plt.gca())
@@ -71,18 +94,48 @@ for radius in r_values:
    #fig.savefig(figf_name+".png")
    fig.savefig(figf_name+".pdf")
 
-   if STT_phi: 
-       print(f"Extracting scalar  GW at r={radius}")
+
+
+################################################
+#  Extract scalar field 
+################################################
+
+   if STT_phi:
+       t_var = []
+       var   = [] 
+       seen_t_values = set()  # Set to track unique t_var values
+
+
        phi_filename =f"mp_phi_l{l_mode_STT}_m{m_mode_STT}_r{radius}0"
-       data_phi = np.loadtxt(f"{dirGw}/output-0000/output_directory/{phi_filename}.asc",dtype=np.float64)
-       t_phi = data_phi[:,0]   
-       phi   = data_phi[:,1]   
-   
-       np.savetxt(phi_filename+".txt", np.column_stack((t_var, var)), header=f't phi {l_mode_STT},{m_mode_STT}', comments='', fmt='%.18e')
-       print(f"Saving file as {phi_filename}")
+       for i in range(int(out_number)):
+          print(f"Extracting scalar at r={radius}")
+          data_phi = np.loadtxt(f"{dirGw}/output-000{i}/output_directory/{phi_filename}.asc",dtype=np.float64)
+          t_phi = data_phi[:,0]   
+          phi   = data_phi[:,1]  
+
+# Calculate the difference8
+          t_phi_adjusted = t_phi - radius
+# Boolean mask to select only positive values of t_var - radius
+          positive_mask = t_phi_adjusted > 0
+# Use the mask to filter the t_var and var arrays
+          t_var_filtered = t_phi_adjusted[positive_mask]
+          var_filtered = phi[positive_mask]
+
+ # Append only unique values
+          for t, v in zip(t_var_filtered, var_filtered):
+            if t not in seen_t_values:
+                seen_t_values.add(t)
+                t_var.append(t)
+                var.append(v)
+          #t_var.extend(t_var_filtered)
+          #var.extend(var_filtered)
+       
+       new_phi_filename = f"{savedatadir}{sim_name}_{phi_filename}.txt"
+       np.savetxt(new_phi_filename, np.column_stack((t_var, var)), header=f't phi {l_mode_STT},{m_mode_STT}', comments='', fmt='%.18e')
+       print(f"Saving file as {new_phi_filename}")
        fig = plt.figure()
-       plt.plot(t_phi, phi,  label = rf"$\varphi^{ {l_mode_STT} , {m_mode_STT} }$ at r ="+str(radius))
-       plt.xlabel(r"$t/M_{sun}$")
+       plt.plot(t_var, var,  label = rf"$\varphi^{ {l_mode_STT} , {m_mode_STT} }$ at r ="+str(radius))
+       plt.xlabel(r"$t_{ret} [M]$")
        plt.ylabel(r"$\varphi$")
        plt.legend()
        pinf.apply_second_xaxis(plt.gca())
