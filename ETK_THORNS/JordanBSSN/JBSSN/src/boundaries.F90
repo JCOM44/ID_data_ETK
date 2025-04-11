@@ -367,6 +367,8 @@ subroutine JBSSN_calc_sf_rhs_bdry_sph( CCTK_ARGUMENTS )
   CCTK_REAL lphi, lKphi
 
   CCTK_REAL dr_lphi, dr_lKphi
+  CCTK_REAL dr_rlphi
+  CCTK_REAL k_wave, vel_g 
 
   CCTK_INT  reflevel
 
@@ -383,7 +385,7 @@ subroutine JBSSN_calc_sf_rhs_bdry_sph( CCTK_ARGUMENTS )
 
   !$OMP PARALLEL DO COLLAPSE(3) &
   !$OMP PRIVATE( i, j, k, rr, lphi, lKphi, &
-  !$OMP dr_lphi, dr_lKphi, expmass )
+  !$OMP dr_lphi, dr_lKphi, expmass, dr_rlphi, k_wave, vel_g )
   do k = cctk_lsh(3)-cctk_nghostzones(3)+1, cctk_lsh(3)
      do j = 1, cctk_lsh(2)
         do i = 1, cctk_lsh(1)
@@ -395,14 +397,25 @@ subroutine JBSSN_calc_sf_rhs_bdry_sph( CCTK_ARGUMENTS )
            expmass   = exp(-mass_phi*rr)
 
            dr_lphi   = (phi1(i,j,k-2) - 4*phi1(i,j,k-1) + 3*phi1(i,j,k))*odr2
+           dr_rlphi   = ( r(i,j,k-2)*phi1(i,j,k-2) - 4*r(i,j,k-1)*phi1(i,j,k-1) + 3*r(i,j,k)*phi1(i,j,k) )*odr2
 
            dr_lKphi  = (Kphi1(i,j,k-2) - 4*Kphi1(i,j,k-1) + 3*Kphi1(i,j,k))*odr2
            
+           ! In massive ST, we have a dispersion relation w^2 = k^2 + m^2, which results in a 
+           ! group velocity smaller than 1 in some cases. To calculate the velocity we need to
+           ! calculate it for every k.  Considering a plane wave Yukawa like solution 
+           ! where phi ~ 1/r e^i(kr + omega t) the value of 
+           ! k can be approximated by k ~ d/dr (r phi) / (r phi) 
+           
+           k_wave = abs(dr_rlphi/(rr*lphi)) 
+           vel_g  = k_wave/sqrt(k_wave*k_wave + mass_phi*mass_phi)
+
+
            ! FIX: check the wave speeds below
 
-           rhs_phi(i,j,k)  = (-dr_lphi - (lphi - phi1_0) / rr - mass_phi * lphi) 
-
-           rhs_Kphi(i,j,k) = (-dr_lKphi - (lKphi - Kphi1_0)  / rr - mass_phi * lKphi) 
+           rhs_phi(i,j,k)  = - vel_g *  (dr_lphi + (lphi - phi1_0) / rr + mass_phi * lphi) 
+           ! Not sure if Kphi has the same velocity
+           rhs_Kphi(i,j,k) = - vel_g *  (dr_lKphi + (lKphi - Kphi1_0)  / rr + mass_phi * lKphi) 
 
         end do
      end do
