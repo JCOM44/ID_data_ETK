@@ -1,8 +1,0 @@
-# Interface definition for thorn ScalarInit
-
-IMPLEMENTS: ScalarInit
-
-INHERITS: ScalarBase grid ADMBase Hydro_RNSID 
-
-PUBLIC:
-
