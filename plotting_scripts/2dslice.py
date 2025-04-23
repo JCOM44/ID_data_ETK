@@ -1,3 +1,17 @@
+#################################################################
+# code for creating a 2d slice in xy and xz plane. 
+#
+# 
+#    Usage:
+#     python3 2dslice.py computer_name sim_name var fps
+#        var : choose var (rho, phi, etc)
+#
+#    Output:
+#    {sim_name}_{var_name}_frames.zip containing all the 
+#       plots to then make a video
+#################################################################
+
+
 import matplotlib.pyplot as plt
 import os, sys
 import numpy as np

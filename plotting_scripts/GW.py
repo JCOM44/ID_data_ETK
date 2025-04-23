@@ -1,3 +1,19 @@
+#################################################################
+# GW extraction code. 
+#
+# Extracts Psi4_l_m and if in STT, also extracts phi_l_m
+# 
+#    Usage:
+# python3 GW.py computer_name sim_name l_mode m_mode STT_phi? l_mode_STT m_mode_STT
+#  STT_phi? : boolean 1 or 0
+#
+#    Output:
+#    {savedatadir}{sim_name}_Psi4_l{l_mode}_m{m_mode}_r{radius}.txt             :  t_ret[M], psi4_lm[M] 
+#    {saveplotdir}{sim_name}_Psi4_l{l_mode}_m{m_mode}_r{radius}.pdf 
+#    {savedatadir}{sim_name}_mp_phi_l{l_mode_STT}_m{m_mode_STT}_r{radius}0.txt  : t_ret[M], phi_lm[M] 
+#    {savedatadir}{sim_name}_mp_phi_l{l_mode_STT}_m{m_mode_STT}_r{radius}0.pdf 
+#################################################################
+
 import matplotlib.pyplot as plt
 import os, sys
 import numpy as np
@@ -19,7 +35,7 @@ M_to_density = c**5 / (G**3 * M_sol**2)  # kg/m^3
 
 
 ################################################
- # Set variables
+ # Set command line arguments
 ################################################
 
 if len(sys.argv) < 7 and len(sys.argv) > 5:
@@ -27,7 +43,7 @@ if len(sys.argv) < 7 and len(sys.argv) > 5:
     sys.exit(1)
 
 
-out_number=3 # number of directories
+
 current_computer = sys.argv[1]
 sim_name = sys.argv[2]
 l_mode = int(sys.argv[3])
@@ -41,8 +57,14 @@ if len(sys.argv)>5:
 else:
    print("This is just GR")
 
+
+################################################
+#       set directories
+################################################
+
 home_dir, sim_dir = pinf.IDcomputer(current_computer)
-dirGw= sim_dir + sim_name 
+dirGw       = sim_dir + sim_name 
+out_number  = pinf.get_out_number(dirGw) 
 current_dir = os.getcwd()
 saveplotdir = current_dir+"/pdfplots/"
 savedatadir = current_dir+"/plots/"
@@ -81,7 +103,9 @@ for radius in r_values:
    t_var_filtered = t_var_adjusted[positive_mask]
    var_filtered = var[positive_mask]
 
-# Plot only the positive values
+################################################
+# Plot Psi4
+################################################
 
    fig = plt.figure()
    plt.plot(t_var_filtered,var_filtered,  label = fr"$\Psi_4^{multipole}$ Real Part at r ="+str(radius))
@@ -113,9 +137,9 @@ for radius in r_values:
           t_phi = data_phi[:,0]   
           phi   = data_phi[:,1]  
 
-# Calculate the difference8
+# Calculate the retarded time t-r_ext
           t_phi_adjusted = t_phi - radius
-# Boolean mask to select only positive values of t_var - radius
+# Boolean mask to select only positive values of t_var - radius, so that t_0 = 0
           positive_mask = t_phi_adjusted > 0
 # Use the mask to filter the t_var and var arrays
           t_var_filtered = t_phi_adjusted[positive_mask]
@@ -127,12 +151,16 @@ for radius in r_values:
                 seen_t_values.add(t)
                 t_var.append(t)
                 var.append(v)
-          #t_var.extend(t_var_filtered)
-          #var.extend(var_filtered)
+
        
        new_phi_filename = f"{savedatadir}{sim_name}_{phi_filename}.txt"
        np.savetxt(new_phi_filename, np.column_stack((t_var, var)), header=f't phi {l_mode_STT},{m_mode_STT}', comments='', fmt='%.18e')
        print(f"Saving file as {new_phi_filename}")
+
+################################################
+#  Plot scalar field 
+################################################
+
        fig = plt.figure()
        plt.plot(t_var, var,  label = rf"$\varphi^{ {l_mode_STT} , {m_mode_STT} }$ at r ="+str(radius))
        plt.xlabel(r"$t_{ret} [M]$")
@@ -140,9 +168,12 @@ for radius in r_values:
        plt.legend()
        pinf.apply_second_xaxis(plt.gca())
 	
-    #   fig.savefig(saveplotdir+sim_name+phi_filename+".png")
        fig.savefig(saveplotdir+sim_name+phi_filename+".pdf")
  
+################################################
+#  Upload to git repo 
+################################################
+
 subprocess.run("git add plots/*",shell=True)
 subprocess.run("git add pdfplots/*",shell=True)
 subprocess.run(f'git commit -m "GW {sim_name}" ',shell= True)

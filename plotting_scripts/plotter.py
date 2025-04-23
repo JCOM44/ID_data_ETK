@@ -1,18 +1,26 @@
+#################################################################
+# Timeseries extraction code. 
+#
+# Extracts timeseries for a given quantity. 
+# 
+#    Usage:
+# python3 GW.py computer_name sim_name var_set output_number 
+#    var_set  : 
+#               GR  (densitty, ham)
+#               simple ( GR + phi)
+#               collapse ( simple + lapse) 
+#               all  ( collapse + shift and  kphi)
+#    Output:
+#    {quantity}_{sim_name}.txt   : t [M], vars[code units] 
+#################################################################
+
 
 import os, sys
 import numpy as np
 import subprocess
-#sys.path.append("/home/jmeneses/ET_files/ID_data_ETK/plotting_scripts/packaging/src")
-#sys.path.append("/home/jmeneses/ET_files/ID_data_ETK/plotting_scripts/matplotlib/lib")
-
-#import matplotlib.pyplot as plt
-#import matplotlib.ticker as mticker
-#from matplotlib import rc
 import re 
 import plot_info as pinf
 
-
-#def fx_plot()
 
 # Check if the output directory is provided as a command-line argument
 if len(sys.argv) < 5:
@@ -42,23 +50,20 @@ old_format = 0
 if re.search(r"imple",var_set):
     var_list = ["rho","phi","ham"]
     thorn_list = ["hydrobase","scalarbase","jbssn"]
+    redux_list = ["norm2"]
 
 elif re.search(r"GR",var_set):
     var_list = ["rho"]
     thorn_list = ["hydrobase"]
 
 elif re.search(r"ollaps",var_set):
-    var_list = ["rho","phi","lapse"]
-    thorn_list = ["hydrobase","scalarbase","admbase"]
-
-elif (debug_on ==1):
-
-    var_list = ["phi_x_derivative","phi_rhs_total","kphi_rhs_total"]
-    thorn_list = ["scalarevolve","scalarevolve","scalarevolve"]
+    var_list = ["rho","phi","lapse","ham"]
+    thorn_list = ["hydrobase","scalarbase","admbase","jbssn"]
+    redux_list = ["norm2"]
 
 else:
-    var_list = ["rho","phi","lapse","kphi","shift","ml_ham"]
-    thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase","ml_admconstraints"]
+    var_list = ["rho","phi","lapse","kphi","shift","ham"]
+    thorn_list = ["hydrobase","scalarbase","admbase","scalarbase","admbase","jbssn"]
 
 
 for j in range(len(thorn_list)):
@@ -82,16 +87,23 @@ for j in range(len(thorn_list)):
 
         # Now you can use the output_dir variable in your program
         print("Looking for simulation directory:", outdir)
+        
 
         t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir,t0)
         if t0<t1[-1]:
+           if quantity=="ham":
+                t_var_temp,var_temp=pinf.redux_timeseries(thorn,quantity,outdir,"norm2")                
+           else:
                 t_var_temp,var_temp=pinf.fx_timeseries(t1,x1,datax1)
-                t_var.extend(t_var_temp)
-                var.extend(var_temp)
+           t_var.extend(t_var_temp)
+           var.extend(var_temp)
 
     os.chdir(plot_dir)
     if file_exist:
-        with open(savefilename,'a') as f:
+        if quantity=="ham":
+           np.savetxt(savefilename, np.column_stack((t_var, var)), header='t {}'.format(quantity), comments='', fmt='%.18e')
+        else:
+           with open(savefilename,'a') as f:
               np.savetxt(f,np.column_stack((t_var, var)), fmt='%.18e')
     else:
         np.savetxt(savefilename, np.column_stack((t_var, var)), header='t {}'.format(quantity), comments='', fmt='%.18e')
