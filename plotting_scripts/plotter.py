@@ -4,7 +4,7 @@
 # Extracts timeseries for a given quantity. 
 # 
 #    Usage:
-# python3 GW.py computer_name sim_name var_set output_number 
+# python3 plotter.py computer_name sim_name var_set coordinate 
 #    var_set  : 
 #               GR  (densitty, ham)
 #               simple ( GR + phi)
@@ -24,18 +24,17 @@ import plot_info as pinf
 
 # Check if the output directory is provided as a command-line argument
 if len(sys.argv) < 5:
-    print("Usage: python3 plotter.py computer_name sim_name var_set  output_number")
+    print("Usage: python3 plotter.py computer_name sim_name var_set coordinate")
     sys.exit(1)
 
 # Retrieve the output directory from the command-line arguments
 current_computer = sys.argv[1]
 sim_name = sys.argv[2]
 var_set = sys.argv[3]
-out_number = sys.argv[4]
-
-
+coordinate  = sys.argv[4]
 
 home_dir, sim_dir =  pinf.IDcomputer(current_computer)
+out_number  = pinf.get_out_number(sim_dir+sim_name) 
 
 current_dir = os.getcwd()
 plot_dir = current_dir+"/plots"
@@ -52,9 +51,13 @@ if re.search(r"imple",var_set):
     thorn_list = ["hydrobase","scalarbase","jbssn"]
     redux_list = ["norm2"]
 
+elif re.search(r"GRcoll",var_set):
+    var_list = ["rho","ham","lapse"]
+    thorn_list = ["hydrobase","jbssn","admbase"]
+
 elif re.search(r"GR",var_set):
-    var_list = ["rho"]
-    thorn_list = ["hydrobase"]
+    var_list = ["rho","ham"]
+    thorn_list = ["hydrobase","jbssn"]
 
 elif re.search(r"ollaps",var_set):
     var_list = ["rho","phi","lapse","ham"]
@@ -87,16 +90,15 @@ for j in range(len(thorn_list)):
 
         # Now you can use the output_dir variable in your program
         print("Looking for simulation directory:", outdir)
-        
 
-        t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir,t0)
-        if t0<t1[-1]:
-           if quantity=="ham":
-                t_var_temp,var_temp=pinf.redux_timeseries(thorn,quantity,outdir,"norm2")                
-           else:
+        if quantity=="ham":
+            t_var_temp,var_temp=pinf.redux_timeseries(thorn,quantity,outdir,"norm2")                
+        else:
+           t1,x1,rl1,rl_n1,datax1 = pinf.get_info(thorn,quantity,outdir,t0)
+           if t0<t1[-1]:
                 t_var_temp,var_temp=pinf.fx_timeseries(t1,x1,datax1)
-           t_var.extend(t_var_temp)
-           var.extend(var_temp)
+        t_var.extend(t_var_temp)
+        var.extend(var_temp)
 
     os.chdir(plot_dir)
     if file_exist:
@@ -112,4 +114,6 @@ for j in range(len(thorn_list)):
 subprocess.run("git add *",shell=True)
 subprocess.run(f'git commit -m "{sim_name}" ',shell= True)
 subprocess.run("git push",shell=True)
+
+print("COMPLETED SUCCESFULLY.")
 

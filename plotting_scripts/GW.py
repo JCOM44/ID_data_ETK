@@ -133,7 +133,7 @@ for radius in r_values:
        phi_filename =f"mp_phi_l{l_mode_STT}_m{m_mode_STT}_r{radius}0"
        for i in range(int(out_number)):
           print(f"Extracting scalar at r={radius}")
-          data_phi = np.loadtxt(f"{dirGw}/output-000{i}/output_directory/{phi_filename}.asc",dtype=np.float64)
+          data_phi = np.loadtxt(f"{dirGw}/output-{i:04d}/output_directory/{phi_filename}.asc",dtype=np.float64)
           t_phi = data_phi[:,0]   
           phi   = data_phi[:,1]  
 

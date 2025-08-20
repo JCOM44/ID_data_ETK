@@ -40,7 +40,8 @@ def IDcomputer(current_computer):
 	    print("Computer identified as zwicky.")
 	elif re.search(r"iscovere",current_computer):
 	    home_dir='/home/jmeneses'
-	    sim_dir='/discofs/bg-phys-02/ETK/simulations/'
+	    sim_dir='/valhalla/projects/bg-phys-02/JoseC/ETK/simulations/'
+	    #sim_dir='/discofs/bg-phys-02/ETK/simulations/'
 	    print("Computer identified as Discoverer.")
 	elif re.search(r"inac",current_computer):
 	    home_dir='/home/tu/tu_tu/tu_pelol01' 
@@ -110,6 +111,31 @@ def check_file(thorn,quantity,file_path):
 		print("File does not exist (yet)")
 		return 0.0, False
 		
+################################################
+# Check if the primary file exists. If not, try the alternative.
+#  
+#    Parameters:
+#        primary (str): Primary file path.
+#        alternative (str): Alternative file path to try if primary not found.
+#        verbose (bool): Whether to print messages.
+#    Returns:
+#        str: Path to the existing file, or None if not found.
+################################################
+
+def find_file(primary, alternative=None, verbose=True):
+    if os.path.isfile(primary):
+        if verbose:
+            print(f"Opening file: {primary}...")
+        return primary
+    elif alternative and os.path.isfile(alternative):
+        if verbose:
+            print(f"Primary file not found. Opening fallback file: {alternative}...")
+        return alternative
+    else:
+        if verbose:
+            print("File not found: neither primary nor fallback.")
+        return None
+
 
 ################################################
 # Function to get info on the simulation properties for a given quantity
@@ -155,7 +181,7 @@ def get_info(thorn,quantity, folder,t0,coordinate="x"):
         rl_n = len(rl)
         print("Total number of refinement levels:", rl_n)
 
-        if t0<t[-1]:
+        if t0<t[-1] and t0!=0:
             t=t[t>t0]
             t_n = len(t)
             print("Number of different time values:", t_n)
@@ -197,16 +223,19 @@ def fx_timeseries(t,x_p,datax,ixd=0, coordinate="x"):     #index value of x as i
     t_n = len(t)
     time_values = []
     f_xt_values = []
-    if ixd==0:
-        print(f"Calculating timeseries for {coordinate} = 0.0")
-    else:
-        print(f"Calculating timeseries for {coordinate} = {x_p[ixd]}")
+    print(f"Calculating timeseries for {coordinate} = {x_p[ixd]}")
     print(f"Starting at  t = {t[0]}")
  # create filter for time steps
     for j in range(t_n): 
         t_index = datax[:,8] == t[j]
- #create new array only with x and data columns for given t
-        f_x_ti = np.vstack(  (datax[t_index,8],  datax[t_index,9]  , datax[t_index,12]  ))  #now x=f_x_ti[0][:] and f(x)=f_x_ti[1][:]
+# get data  as t,coordinate,f(t,coordinate) 
+        if coordinate == "x": 
+          f_x_ti = np.vstack(  (datax[t_index,8],  datax[t_index,9]  , datax[t_index,12]  ))
+        if coordinate == "y": 
+          f_x_ti = np.vstack(  (datax[t_index,8],  datax[t_index,10]  , datax[t_index,12]  ))
+        if coordinate == "z": 
+          f_x_ti = np.vstack(  (datax[t_index,8],  datax[t_index,11]  , datax[t_index,12]  ))
+#now x=f_x_ti[0][:] and f(x)=f_x_ti[1][:]
  #create filter for space points
         if ixd==0:
            x_index = f_x_ti[1][:] == 0.0
@@ -241,7 +270,9 @@ def fx_timeseries(t,x_p,datax,ixd=0, coordinate="x"):     #index value of x as i
 
 def redux_timeseries(thorn,quantity,folder,redux):
         os.chdir(folder)
-        filex = f"{thorn}-{quantity}.{redux}.asc"
+        filex_primary = f"{thorn}-{quantity}.{redux}.asc"
+        filex_fallback = f"hc.{redux}.asc"
+        filex = find_file(filex_primary, alternative=filex_fallback)
         print("Opening file: {}.....".format(filex))
         datax = np.loadtxt(filex, comments='#')
         print("Reading file....")

@@ -107,9 +107,9 @@ if make_movie == "r":
    subprocess.run("git push",shell=True)
 
 
-################################################
- # make movie of 1d slice evolution
-################################################
+###################################################
+ # make movie of 1d slice evolution at different t
+###################################################
    
 elif make_movie == "yes":
    thorns = ["hydrobase","admbase","scalarbase"]
@@ -149,14 +149,14 @@ elif make_movie == "yes":
  # only get  1d slice evolution data
 ################################################
 else:
-   thorns = ["hydrobase","admbase","scalarbase","jbssn"]
-   quantities = ["rho","lapse","phi","ham"]
+   thorns = ["hydrobase","admbase","scalarbase"]
+   quantities = ["rho","lapse","phi"]
 
    for thorn, quantity in zip(thorns,quantities):
       tk1,xk1,rl1,rln1,datax = pinf.get_info(thorn,quantity,direc,0.0,coordinate)
       for itd in range(0,len(tk1),1):
          x_j, f_xj_ti = pinf.get_1d_slice(tk1,xk1,datax,itd,coordinate) 
-         var_file = f"{current_dir}/plots/{sim_name}_{quantity}_{tk1[itd]:.4f}.txt"
+         var_file = f"{current_dir}/plots/plots_{sim_name}/{sim_name}_{quantity}_{tk1[itd]:.4f}.txt"
          np.savetxt(var_file, np.column_stack((x_j,f_xj_ti)),header=f"{coordinate} {quantity}", fmt ="%.13f")
 
      # Extract radius of star
