@@ -217,7 +217,7 @@ def get_info(thorn,quantity, folder,t0,coordinate="x"):
 #        f_xt_values : array, f(t,x=x[ixd])
 ################################################
 
-def fx_timeseries(t,x_p,datax,ixd=0, coordinate="x"):     #index value of x as input
+def fx_timeseries(t,x_p,datax,ixd=0, coordinate="x",at_center=True):     #index value of x as input
     #create output lists
     print(os.getcwd())
     t_n = len(t)
@@ -237,7 +237,7 @@ def fx_timeseries(t,x_p,datax,ixd=0, coordinate="x"):     #index value of x as i
           f_x_ti = np.vstack(  (datax[t_index,8],  datax[t_index,11]  , datax[t_index,12]  ))
 #now x=f_x_ti[0][:] and f(x)=f_x_ti[1][:]
  #create filter for space points
-        if ixd==0:
+        if at_center:
            x_index = f_x_ti[1][:] == 0.0
         else:
            x_index = f_x_ti[1][:] == x_p[ixd]
