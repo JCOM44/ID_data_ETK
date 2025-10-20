@@ -39,7 +39,7 @@ def IDcomputer(current_computer):
 	    sim_dir= home_dir+'/simulations/'
 	    print("Computer identified as zwicky.")
 	elif re.search(r"iscovere",current_computer):
-	    home_dir='/home/jmeneses'
+	    home_dir='/valhalla/projects/bg-phys-02/JoseC/ETK'
 	    sim_dir='/valhalla/projects/bg-phys-02/JoseC/ETK/simulations/'
 	    #sim_dir='/discofs/bg-phys-02/ETK/simulations/'
 	    print("Computer identified as Discoverer.")

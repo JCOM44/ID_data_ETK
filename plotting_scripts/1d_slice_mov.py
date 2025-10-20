@@ -3,7 +3,7 @@
 #
 # 
 #    Usage:
-#   python3 1d_slice_mov.py computer_name sim_name coordinate adjust_axs? make_movie       
+#   python3 1d_slice_mov.py computer_name sim_name coordinate adjust_axs? make_movie STT? 
 #          computer_name: Specify computer (to add paths)       
 #          coordinate: x, y, z                                                                                               
 #          adjust_axs: 1 to keep axis in plot fixed, 0 to auto adjust
@@ -62,7 +62,7 @@ sim_name = sys.argv[2]
 coordinate = sys.argv[3]
 adj_axs = sys.argv[4]
 make_movie  = sys.argv[5]
-
+is_STT = sys.argv[6]
 
 home_dir, sim_dir = pinf.IDcomputer(current_computer)
 direc= sim_dir + sim_name+"/output-0000/output_directory" 
@@ -112,9 +112,15 @@ if make_movie == "r":
 ###################################################
    
 elif make_movie == "yes":
-   thorns = ["hydrobase","admbase","scalarbase"]
-   quantities = ["rho","lapse","phi"]
-   ax_lims = [(-0.0001,0.006),(-0.01,1),(-0.01,0.03)]
+   if is_STT=="yes":
+       thorns = ["hydrobase","admbase","scalarbase"]
+       quantities = ["rho","lapse","phi"]
+       ax_lims = [(-0.0001,0.006),(-0.01,1),(-0.01,0.03)]
+   else:
+       thorns = ["hydrobase","admbase"]
+       quantities = ["rho","lapse"]
+       ax_lims = [(-0.0001,0.006),(-0.01,1)]
+
 
    tk1,xk1,rl1,rln1,datax = pinf.get_info(thorns[0],quantities[0],direc,0.0,coordinate)
    if not os.path.isdir(tmp_dir):
@@ -132,11 +138,11 @@ elif make_movie == "yes":
             t_re_x.append(tk1[itd])
             re_x.append(x_surface)
 # Plot with sorted data
-         ax.plot(x_j, f_xj_ti, label=rf'BD $k_0-0.1$, $m_\varphi=1.0e-2$,  t={tk1[itd]/M_to_ms:.4f} ms', color='red')
+         ax.plot(x_j, f_xj_ti, label=rf'  t={tk1[itd]/M_to_ms:.4f} ms', color='red')
          ax.set_xlabel(rf'{coordinate} [$M$]', fontsize=14)
          if adj_axs:
             ax.set_ylim(lim_ax)
-         ax.set_xlim(-35,35)
+         ax.set_xlim(-20,20)
          ax.legend()
          ax.set_title(title_coll[quantity], fontsize=16)
          ax.grid(True)
